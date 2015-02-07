@@ -1,0 +1,3 @@
+Debian packages needed for compilation:
+build-essentials libpng12-dev libconfig-dev liblua5.2-dev check
+  
