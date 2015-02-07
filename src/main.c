@@ -38,7 +38,7 @@
 
 void err_config(config_t* config);
 void lower_string(char* s);
-void print_help();
+void print_help(char* exe_name);
 void check_lua_error(char** lua_msg);
 
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz);
@@ -52,7 +52,6 @@ int main(int argc, char *argv[])
 	char* exe_path = dirname(exe_fullpath);
 	char* exe_name = basename(exe_fullpath);
 	
-
 	
     short test_flag = 0;
     short help_flag = 0;
@@ -99,7 +98,7 @@ int main(int argc, char *argv[])
 
     if (help_flag)
     {
-        print_help();
+        print_help(exe_name);
         exit(0);
     }
 
@@ -113,7 +112,7 @@ int main(int argc, char *argv[])
     if (config_files_count == 0)
     {
         printf("No config file was provided.\n\n");
-        print_help();
+        print_help(exe_name);
         exit(-1);
     }
 
