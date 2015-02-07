@@ -16,7 +16,7 @@ find_package(Threads   REQUIRED)
 find_package(RT        REQUIRED)
 
 
-set(CMAKE_C_FLAGS "-g -Wall -std=c11")
+set(CMAKE_C_FLAGS "-Wall -std=c11")
 
 add_subdirectory(src)
 
