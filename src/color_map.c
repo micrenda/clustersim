@@ -533,8 +533,46 @@ unsigned int get_color_acid(unsigned int i, unsigned int n)
     return color_map_acid[i % 500];
 }
 
-unsigned int get_color_grad_rgb(unsigned int i, unsigned int n, unsigned int start_rgb, unsigned int end_rgb)
+unsigned int get_color_grad_rgb(unsigned int i, unsigned int n, unsigned int colors_size, unsigned int* colors)
 {
+	unsigned int ranges = colors_size - 1;
+	
+	unsigned int start_rgb;
+	unsigned int end_rgb;
+	
+	double i_r;
+	double n_r;
+	
+	
+	
+	
+	if (i <= 0)
+	{
+		start_rgb = colors[0];
+		end_rgb   = colors[1];
+		
+		i_r = 0.d;
+		n_r = 1.d * n / ranges;
+	}
+	else if (i >= n)
+	{
+		start_rgb   = colors[colors_size - 2];
+		end_rgb   	= colors[colors_size - 1];
+		
+		i_r = 1.d * n / ranges - 1;
+		n_r = 1.d * n / ranges;
+	}
+	else
+	{
+		unsigned int lower_index = floor(1.d * ranges * i / n);  
+		start_rgb = colors[lower_index];
+		end_rgb	  = colors[lower_index+1];
+		n_r = 1.d * n / ranges;
+		i_r = fmod(i, n_r);
+	}
+
+	 
+	
     unsigned short start_red   = (start_rgb & 0xff0000) >> 16;
     unsigned short start_green = (start_rgb & 0x00ff00) >>  8;
     unsigned short start_blue  = (start_rgb & 0x0000ff) >>  0;
@@ -543,9 +581,9 @@ unsigned int get_color_grad_rgb(unsigned int i, unsigned int n, unsigned int sta
     unsigned short end_green   = (end_rgb & 0x00ff00) >>  8;
     unsigned short end_blue    = (end_rgb & 0x0000ff) >>  0;
 
-    unsigned short color_red   = start_red   + round(1.f * (end_red   - start_red  ) * i / n);
-    unsigned short color_green = start_green + round(1.f * (end_green - start_green) * i / n);
-    unsigned short color_blue =  start_blue  + round(1.f * (end_blue  - start_blue ) * i / n);
+    unsigned short color_red   = start_red   + round(1.f * (end_red   - start_red  ) * i_r / n_r);
+    unsigned short color_green = start_green + round(1.f * (end_green - start_green) * i_r / n_r);
+    unsigned short color_blue =  start_blue  + round(1.f * (end_blue  - start_blue ) * i_r / n_r);
 
     return (color_red << 16) + (color_green << 8) + (color_blue << 0);
 }

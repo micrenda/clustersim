@@ -44,6 +44,9 @@ void check_lua_error(char** lua_msg);
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz);
 char *dirname(char *path);
 char *basename(char *path);
+char *getcwd(char *buf, size_t size);
+
+int recursive_mkdir(const char *dir);
 
 int main(int argc, char *argv[])
 {
@@ -53,9 +56,14 @@ int main(int argc, char *argv[])
 	char* exe_name = basename(exe_fullpath);
 	
 	
+	
     short test_flag = 0;
     short help_flag = 0;
-    char* base_directory = "/tmp";
+    
+    char base_directory[PATH_MAX];
+    getcwd(base_directory, PATH_MAX);
+    
+    
     char* graph_type = "pdf";
 
 
@@ -76,7 +84,7 @@ int main(int argc, char *argv[])
             test_flag = 1;
             break;
         case 'o':
-            base_directory = optarg;
+            strcpy(optarg, base_directory);
             break;
         case 'g':
             graph_type = optarg;
@@ -106,6 +114,11 @@ int main(int argc, char *argv[])
     {
         exit(test_everything());
     }
+
+	if (strcmp(base_directory, exe_path) == 0)
+	{
+		sprintf(base_directory, "%s/output", exe_path);
+	}
 
 
     unsigned int config_files_count = argc - optind;
@@ -453,7 +466,7 @@ int main(int argc, char *argv[])
         do
         {
             sprintf(output_directory, "%s/%s_%u", base_directory, basename, u);
-            status_mkdir = mkdir(output_directory, S_IRUSR|S_IWUSR|S_IXUSR);
+            status_mkdir = recursive_mkdir(output_directory);
 
             if (status_mkdir == 0)
             {
@@ -518,7 +531,7 @@ int main(int argc, char *argv[])
             else
                 sprintf(render->output_directory, "%s/render_%s", output_directory, render->name);
 
-            int status_mkdir = mkdir(render->output_directory, S_IRUSR|S_IWUSR|S_IXUSR);
+            int status_mkdir = recursive_mkdir(render->output_directory);
 
             if (status_mkdir != 0)
             {
@@ -1021,6 +1034,28 @@ void lower_string(char* s)
     }
 }
 
+int recursive_mkdir(const char *dir)
+{
+	char tmp[PATH_MAX];
+	char *p = NULL;
+	size_t len;
+
+	snprintf(tmp, sizeof(tmp),"%s",dir);
+	len = strlen(tmp);
+	if(tmp[len - 1] == '/')
+		tmp[len - 1] = 0;
+	for(p = tmp + 1; *p; p++)
+	{
+		if(*p == '/')
+		{
+			*p = 0;
+			mkdir(tmp, S_IRWXU);
+			*p = '/';
+		}
+	}
+	return mkdir(tmp, S_IRWXU);
+}
+
 void print_help(char* exe_name)
 {
     printf("Usage:\n\n");
@@ -1028,7 +1063,7 @@ void print_help(char* exe_name)
     printf("  %s -t\n", exe_name);
     printf("  %s -h\n", exe_name);
     printf("\n");
-    printf("  -o  --output_dir <output_dir>            Set output directory (default /tmp)\n");
+    printf("  -o  --output_dir <output_dir>            Set output directory (default current working dir)\n");
     printf("  -t  --test                               Execute internal tests\n");
     printf("  -g  --graph_type                         Specify the format of the graphs (default pdf)\n");
     printf("  -h  --help                               Print this help menu\n");

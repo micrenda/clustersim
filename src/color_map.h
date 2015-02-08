@@ -3,6 +3,6 @@
 
 void init_color_map();
 unsigned int get_color_acid(unsigned int i, unsigned int n);
-unsigned int get_color_grad_rgb(unsigned int i, unsigned int n, unsigned int start_rgb, unsigned int end_rgb);
+unsigned int get_color_grad_rgb(unsigned int i, unsigned int n, unsigned int colors_size, unsigned int* colors);
 
 #endif // COLOR_MAP_H_INCLUDED

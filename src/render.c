@@ -356,13 +356,13 @@ unsigned int get_pixel_color(CommonStatus* common_status, Render* render, Cluste
         case RANDOM_ACID:
             return get_color_acid(cluster->id, clusters_count);
         case GRADIENT_RADIUS:
-            return get_color_grad_rgb(cluster->radius, common_status->max_radius, render->color_1, render->color_2);
+            return get_color_grad_rgb(cluster->radius, common_status->max_radius   / 10.d, 	render->colors_size, render->colors);
         case GRADIENT_VOLUME:
-            return get_color_grad_rgb(cluster->volume, common_status->space_volume, render->color_1, render->color_2);
+            return get_color_grad_rgb(cluster->volume, common_status->space_volume / 100.d,	render->colors_size, render->colors);
         case GRADIENT_AGE:
-            return get_color_grad_rgb(t - cluster->creation_time, duration, render->color_1, render->color_2);
+            return get_color_grad_rgb(t - cluster->creation_time, duration, 		render->colors_size, render->colors);
         case GRADIENT_BIRTH:
-            return get_color_grad_rgb(cluster->creation_time, duration, render->color_1, render->color_2);
+            return get_color_grad_rgb(cluster->creation_time, duration, 			render->colors_size, render->colors);
         default:
             return 0x000000;
     }
@@ -571,19 +571,35 @@ void parse_render(CommonStatus* common_status, Render* render, config_setting_t*
         }
 
 
-        if (config_setting_lookup_int(config_render, "color_1", (int *) &render->color_1) != CONFIG_TRUE)
-        {
-            render->color_1 = 0xeeeeee;
-        }
-
-        if (config_setting_lookup_int(config_render, "color_2", (int *) &render->color_2) != CONFIG_TRUE)
-        {
-            render->color_1 = 0x111111;
-        }
+		render->colors_size = 0;
+		while(1)
+		{
+			char color_id[256];
+			int buffer;
+			
+			sprintf(color_id, "color_%d", render->colors_size + 1); 
+			if (config_setting_lookup_int(config_render, color_id, &buffer)  != CONFIG_TRUE)
+				break;
+				
+			render->colors_size++;
+		}
+		
+		render->colors = calloc(render->colors_size, sizeof(unsigned int));
+		
+		for(unsigned int c = 0; c < render->colors_size; c++)
+		{
+			char color_id[256];
+			
+			sprintf(color_id, "color_%d", c + 1); 
+			if (config_setting_lookup_int(config_render, color_id, (int*) &render->colors[c])  != CONFIG_TRUE)
+				break;
+		}
+		
 }
 
 void free_render(Render* render)
 {
+	free(render->colors);
     free(render->cut_directions);
     free(render->cut_levels);
 }

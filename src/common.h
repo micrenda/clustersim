@@ -40,9 +40,11 @@ typedef struct SRender
 
 	unsigned int*   cut_levels;
 	unsigned short* cut_directions;
-	ColorType    color_scheme;
-	unsigned int color_1;
-	unsigned int color_2;
+	ColorType color_scheme;
+	
+	
+	unsigned int  colors_size;
+	unsigned int* colors;
 } Render;
 
 
