@@ -21,7 +21,7 @@
 				'src/test.h'
                         ],
 
-                        'libraries':    ['-fopenmp', '-lconfig', '-llua5.2', '-lpng' , '-ldl', '-lcheck'],
+                        'libraries':    ['-fopenmp', '-lconfig', '-llua5.2', '-lpng' , '-ldl', '-lcheck', '-lrt'],
 
                         'conditions':
                         [

@@ -930,7 +930,26 @@ int main(int argc, char *argv[])
         // ffmpeg -framerate 5 -i frame_%06d.png -c:v libx264 -r 30 movie.mp4
         //
 
-        const char* video_config_executable		= "avconv";  // ffmpeg
+
+
+        const char* video_config_executable;  // ffmpeg
+        
+        // Checking which ffmpeg command is available (Debian uses avconv while other distros use ffmpeg)
+		if (system("avconv -h > /dev/null 2> /dev/null") == 0)
+		{
+			video_config_executable = "avconv";
+		}
+		else if (system("ffmpeg -h > /dev/null 2> /dev/null") == 0)
+		{
+			video_config_executable = "ffmpeg";
+		}
+		else
+		{
+			video_config_executable = "ffmpeg";
+			printf("WARNING: Unable to find 'ffmpeg' command. The video creation will be disabled.\n");	
+		}
+        
+        
         const char* video_config_encoder		= "libx264"; // mpeg4
         const char* video_config_ext		    = "mp4";     // avi
 
