@@ -1,7 +1,7 @@
 #define _BSD_SOURCE 1
 
-#include <lua5.2/lua.h>
-#include <lua5.2/lauxlib.h>
+#include <lua.h>
+#include <lauxlib.h>
 
 #include <stdlib.h>
 #include <string.h>

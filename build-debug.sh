@@ -1,6 +1,5 @@
-mkdir -p build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make clean
+rm -rf build/
+gyp build.gyp --depth . --generator-output=build -DTARGET=debug
+cd build/
 make
-cp src/clustersim ..
+cp out/Default/clustersim ..
