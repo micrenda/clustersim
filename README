@@ -1,3 +1,6 @@
 Debian packages needed for compilation:
-build-essentials libpng12-dev libconfig-dev liblua5.2-dev check
+build-essentials libpng12-dev libconfig-dev liblua5.2-dev check libgsl0-dev libblas-dev libgomp1
+
+Debian packages needed for execution:
+ctioga2 ffmpeg/avconv
   
