@@ -1,0 +1,23 @@
+title 'Cluster grow'
+
+xlabel '$\ln(t)$'
+ylabel '$\ln(-\ln(1-X))$'
+
+marker bullet
+line-style no
+plot @'$1:$2' /where x>=0 /legend "real"
+
+marker no
+line-style solid
+math  /xrange "$(min_ln_t):$(max_ln_t)" /samples 200
+plot  "$(fit_n) * x + log($(fit_k))" /legend "fit"
+
+color 	gray
+line-style dashes
+plot  "$(min_fit_volume)"
+plot  "$(max_fit_volume)"
+
+legend-inside tl
+
+legend-line "n=$(fit_n)"
+legend-line "k=$(fit_k)"

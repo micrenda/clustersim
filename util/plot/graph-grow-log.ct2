@@ -1,0 +1,4 @@
+title 'Cluster grow'
+plot @'$1:$2'
+xlabel '$\ln(t)$'
+ylabel '$\ln(-\ln(1-X))$'

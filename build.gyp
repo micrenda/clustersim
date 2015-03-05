@@ -17,11 +17,15 @@
 				'src/main.c',
 				'src/render.c',
 				'src/render.h',
+				'src/graph.c',
+				'src/graph.h',
+				'src/avrami.c',
+				'src/avrami.h',
 				'src/test.c',
-				'src/test.h'
+				'src/test.h',
                         ],
 
-                        'libraries':    ['-fopenmp', '-lconfig', '-llua5.2', '-lpng' , '-ldl', '-lcheck', '-lrt'],
+                        'libraries':    ['-fopenmp', '-lconfig', '-llua5.2', '-lpng' , '-ldl', '-lcheck', '-lrt', '-lgsl', '-lblas'],
 
                         'conditions':
                         [

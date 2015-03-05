@@ -35,6 +35,8 @@
 #include "render.h"
 #include "test.h"
 #include "color_map.h"
+#include "graph.h"
+#include "avrami.h"
 
 void err_config(config_t* config);
 void lower_string(char* s);
@@ -63,8 +65,6 @@ int main(int argc, char *argv[])
     char base_directory[PATH_MAX];
     getcwd(base_directory, PATH_MAX);
     
-    
-    char* graph_type = "pdf";
 
 
     int flag;
@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
         {"test", 0, 0, 't'},
         {"help", 0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
-        {"graph_type", 1, 0, 'g'},
         {NULL, 0, NULL, 0}
     };
     int option_index = 0;
@@ -85,9 +84,6 @@ int main(int argc, char *argv[])
             break;
         case 'o':
             strcpy(optarg, base_directory);
-            break;
-        case 'g':
-            graph_type = optarg;
             break;
         case 'h':
             print_help(exe_name);
@@ -246,6 +242,14 @@ int main(int argc, char *argv[])
 		int avrami_mode = 0;
 		if (config_setting_lookup_int(config_sim, "avrami_mode", &avrami_mode) == CONFIG_TRUE);
 
+		// Get the volume limits to calculated avrami coefficients (NB: this values is a percentual)
+		double avrami_fit_min_volume = 0.0;
+		double avrami_fit_max_volume = 1.0;
+		
+		config_setting_lookup_float(config_sim, "avrami_fit_min_volume", &avrami_fit_min_volume);
+		config_setting_lookup_float(config_sim, "avrami_fit_max_volume", &avrami_fit_max_volume);
+
+
         // Define the size of the space.
         unsigned int space_sizes[cfg_dimensions];
 
@@ -272,7 +276,6 @@ int main(int argc, char *argv[])
             printf("ERROR - No 'container_size' setting in configuration file.\n");
             err_config(config);
         }
-
 
         // Initialize the common module, to be able t encode/decode positions
         CommonStatus* common_status = init_common(cfg_dimensions, space_sizes, duration);
@@ -552,7 +555,7 @@ int main(int argc, char *argv[])
             err_config(config);
         }
 
-        fprintf(csv_grow_file, "time,new_clusters_asked,new_clusters_created,clusters_total,volume_grow,volume_total,volume_totale_perc\n");
+        fprintf(csv_grow_file, "#time,new_clusters_asked,new_clusters_created,clusters_total,volume_grow,volume_total,volume_totale_perc\n");
 
 
         le_init();
@@ -901,7 +904,7 @@ int main(int argc, char *argv[])
         }
 
 
-        fprintf(csv_clusters_file, "creation_time,radius,volume,volume_perc\n");
+        fprintf(csv_clusters_file, "#creation_time,radius,volume,volume_perc\n");
 
         for (unsigned int c = 0; c < clusters_count; c++)
         {
@@ -993,21 +996,30 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Create graphs with octave
-        char octave_cmd[256];
-        sprintf(octave_cmd, "%s/util/avrami-graph.m '%s' '%s' '%s' %d %f %f %s", exe_path, basename, output_directory, output_directory, common_status->dimensions, 0.10, 0.90, graph_type);
 
-        printf("Running avrami-graph for '%s'... ", basename);
-        int status = system(octave_cmd);
-        if (status == 0)
-            printf("DONE\n");
-        else
-        {
-            printf("ERROR\n");
-            printf("________________________________________\n");
-            printf("Failed command:\n%s\n", octave_cmd);
-            printf("________________________________________\n");
-        }
+	    char csv_filename_grow_log[256];
+        sprintf(csv_filename_grow_log, "%s/grow_summary_log.csv", output_directory);
+
+		double  min_t, max_t, fit_n, fit_k, theo_n, theo_k;
+		compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k);
+
+        //// Create graphs with octave
+        //char octave_cmd[256];
+        //sprintf(octave_cmd, "%s/util/avrami-graph.m '%s' '%s' '%s' %d %f %f %s", exe_path, basename, output_directory, output_directory, common_status->dimensions, 0.10, 0.90, graph_type);
+
+        //printf("Running avrami-graph for '%s'... ", basename);
+        //int status = system(octave_cmd);
+        //if (status == 0)
+            //printf("DONE\n");
+        //else
+        //{
+            //printf("ERROR\n");
+            //printf("________________________________________\n");
+            //printf("Failed command:\n%s\n", octave_cmd);
+            //printf("________________________________________\n");
+        //}
+        
+        created_graphs(output_directory, output_directory, exe_path, min_t, max_t, avrami_fit_min_volume, avrami_fit_max_volume, fit_n, fit_k, theo_n, theo_k);
 
 
         // Freeing the memory
@@ -1075,6 +1087,9 @@ int recursive_mkdir(const char *dir)
 	return mkdir(tmp, S_IRWXU);
 }
 
+
+
+
 void print_help(char* exe_name)
 {
     printf("Usage:\n\n");
@@ -1084,7 +1099,6 @@ void print_help(char* exe_name)
     printf("\n");
     printf("  -o  --output_dir <output_dir>            Set output directory (default current working dir)\n");
     printf("  -t  --test                               Execute internal tests\n");
-    printf("  -g  --graph_type                         Specify the format of the graphs (default pdf)\n");
     printf("  -h  --help                               Print this help menu\n");
     printf("\n");
 }

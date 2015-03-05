@@ -1,0 +1,4 @@
+title 'Cluster grow'
+plot @'$1:$7*100'
+xlabel '$t$'
+ylabel '$X$ [$\%$]'
