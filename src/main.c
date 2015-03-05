@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 	
 	
     short test_flag = 0;
+    short debug_flag = 0;
     short help_flag = 0;
     
     char base_directory[PATH_MAX];
@@ -69,8 +70,9 @@ int main(int argc, char *argv[])
 
     int flag;
     static struct option long_options[] = {
-        {"test", 0, 0, 't'},
-        {"help", 0, 0, 'h'},
+        {"test",  0, 0, 't'},
+        {"debug", 0, 0, 'd'},
+        {"help",  0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
         {NULL, 0, NULL, 0}
     };
@@ -81,6 +83,9 @@ int main(int argc, char *argv[])
         {
         case 't':
             test_flag = 1;
+            break;
+        case 'd':
+            debug_flag = 1;
             break;
         case 'o':
             strcpy(optarg, base_directory);
@@ -895,32 +900,31 @@ int main(int argc, char *argv[])
         }
 
 
-        fprintf(csv_clusters_file, "id,");
+        fprintf(csv_clusters_file, "#id,creation_time,radius,volume,volume_perc");
         for (unsigned short d = 0; d < common_status->dimensions; d++)
         {
             char axis_label[8];
             dimension_to_label(axis_label, common_status, d);
-            fprintf(csv_clusters_file, "center_%s,", axis_label);
+            fprintf(csv_clusters_file, ",center_%s", axis_label);
         }
 
-
-        fprintf(csv_clusters_file, "#creation_time,radius,volume,volume_perc\n");
+        fprintf(csv_clusters_file, "\n");
 
         for (unsigned int c = 0; c < clusters_count; c++)
         {
             Cluster* cluster = &clusters[c];
 
             fprintf(csv_clusters_file, "%u,", cluster->id);
-
+            fprintf(csv_clusters_file, "%u,", cluster->creation_time);
+            fprintf(csv_clusters_file, "%u,", cluster->radius);
+            fprintf(csv_clusters_file, "%u,", cluster->volume);
+            fprintf(csv_clusters_file, "%f,", 1.d * cluster->volume / common_status->space_volume);
+            
             unsigned int center[common_status->dimensions];
             decode_position_cartesian(common_status, center, cluster->center);
             for (unsigned short d = 0; d < common_status->dimensions; d++)
                 fprintf(csv_clusters_file, "%u,", center[d]);
-
-            fprintf(csv_clusters_file, "%u,", cluster->creation_time);
-            fprintf(csv_clusters_file, "%u,", cluster->radius);
-            fprintf(csv_clusters_file, "%u,", cluster->volume);
-            fprintf(csv_clusters_file, "%f", 1.d * cluster->volume / common_status->space_volume);
+            
             fprintf(csv_clusters_file,"\n");
         }
 
@@ -975,11 +979,16 @@ int main(int argc, char *argv[])
                     render->name,
                     video_config_ext);
 
-                printf("Running ffmpeg for 'render_%d'... ", r + 1);
+				
+				printf("Running ffmpeg for 'render_%d':\t", r + 1);
+                if (debug_flag)
+					printf("%s\n", ffmpeg_cmd);
+                
                 int status = system(ffmpeg_cmd);
                 if (status == 0)
                 {
-                    printf("DONE\n");
+					if (!debug_flag)
+						printf("DONE\n");
                     
                     // Deleting PNG files
                     char del_cmd[256];
@@ -1019,7 +1028,7 @@ int main(int argc, char *argv[])
             //printf("________________________________________\n");
         //}
         
-        created_graphs(output_directory, output_directory, exe_path, min_t, max_t, avrami_fit_min_volume, avrami_fit_max_volume, fit_n, fit_k, theo_n, theo_k);
+        created_graphs(output_directory, output_directory, exe_path, min_t, max_t, avrami_fit_min_volume, avrami_fit_max_volume, fit_n, fit_k, theo_n, theo_k, debug_flag);
 
 
         // Freeing the memory

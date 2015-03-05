@@ -1,0 +1,8 @@
+title 'Cluster volume'
+
+xlabel "volume"
+ylabel "clusters"
+
+math /samples=15 /xrange=-1.5:1.5
+histogram /gap=1mm
+plot 'x'
