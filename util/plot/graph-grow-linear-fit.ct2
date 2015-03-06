@@ -21,4 +21,4 @@ legend-inside tl
 
 legend-line "\$n=$(fit_n)\$"
 legend-line "\$k=$(fit_k)\$"
-legend-line "\$X=1-e^{-$(fit_k)t^{$(fit_n)}}\$"
+legend-line "\$X=1-e^{-$(fit_k) \cdot t^{$(fit_n)}}\$"
