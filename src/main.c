@@ -63,6 +63,10 @@ int main(int argc, char *argv[])
     short debug_flag = 0;
     short help_flag = 0;
     
+    const char* video_config_encoder		= "libx264"; // mpeg4
+    const char* video_config_ext		    = "mp4";     // avi
+ 
+    
     char base_directory[PATH_MAX];
     getcwd(base_directory, PATH_MAX);
     
@@ -72,12 +76,13 @@ int main(int argc, char *argv[])
     static struct option long_options[] = {
         {"test",  0, 0, 't'},
         {"debug", 0, 0, 'd'},
+        {"ffmpeg-encoder",   0, 0, 'x'},
         {"help",  0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
         {NULL, 0, NULL, 0}
     };
     int option_index = 0;
-    while ((flag = getopt_long(argc, argv, "htg:o:", long_options, &option_index)) != -1)
+    while ((flag = getopt_long(argc, argv, "htdg:o:", long_options, &option_index)) != -1)
     {
         switch (flag)
         {
@@ -86,6 +91,9 @@ int main(int argc, char *argv[])
             break;
         case 'd':
             debug_flag = 1;
+            break;
+        case 'x':
+            strcpy(optarg, video_config_encoder);
             break;
         case 'o':
             strcpy(optarg, base_directory);
@@ -955,10 +963,7 @@ int main(int argc, char *argv[])
 			video_config_executable = "ffmpeg";
 			printf("WARNING: Unable to find 'ffmpeg' command. The video creation will be disabled.\n");	
 		}
-        
-        
-        const char* video_config_encoder		= "libx264"; // mpeg4
-        const char* video_config_ext		    = "mp4";     // avi
+
 
         for (unsigned r = 0; r < render_count; r++)
         {
@@ -1136,13 +1141,14 @@ int recursive_mkdir(const char *dir)
 void print_help(char* exe_name)
 {
     printf("Usage:\n\n");
-    printf("  %s [-o <output_dir>] <file1.cfg> <file2.cfg> <file3.cfg> ...\n", exe_name);
+    printf("  %s [-o <output_dir>] [--ffmpeg-encoder <encoder>] <file1.cfg> <file2.cfg> <file3.cfg> ...\n", exe_name);
     printf("  %s -t\n", exe_name);
     printf("  %s -h\n", exe_name);
     printf("\n");
-    printf("  -o  --output_dir <output_dir>            Set output directory (default current working dir)\n");
-    printf("  -t  --test                               Execute internal tests\n");
-    printf("  -h  --help                               Print this help menu\n");
+    printf("      --ffmpeg-encoder <output_dir>            Set encoder used by ffmpeg (default libx264)\n");
+    printf("  -o  --output_dir     <output_dir>            Set output directory (default current working dir)\n");
+    printf("  -t  --test                                   Execute internal tests\n");
+    printf("  -h  --help                                  Print this help menu\n");
     printf("\n");
 }
 
