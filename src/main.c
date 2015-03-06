@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
     short debug_flag = 0;
     short help_flag = 0;
     
-    const char* video_config_encoder		= "libx264"; // mpeg4
-    const char* video_config_ext		    = "mp4";     // avi
+    const char video_config_encoder[256]		= "libx264"; // mpeg4
+    const char video_config_ext[256]		    = "mp4";     // avi
  
     
     char base_directory[PATH_MAX];
