@@ -14,9 +14,9 @@ plot  "$(fit_n) * x + log($(fit_k))" /legend "fit"
 
 color 	gray
 line-style dashes
-plot  "$(min_fit_volume)"
-plot  "$(max_fit_volume)"
-
+plot  "log(-log(1-$(min_fit_volume)))"
+plot  "log(-log(1-$(max_fit_volume)))"
+ 
 legend-inside tl
 
 legend-line "n=$(fit_n)"

@@ -1,0 +1,24 @@
+title 'Cluster grow'
+
+xlabel '$t$'
+ylabel '$X$ [$\%$]'
+
+marker bullet
+line-style no
+plot @'$1:$7*100'
+
+marker no
+line-style solid
+math  /xrange "$(min_t):$(max_t)" /samples 200
+plot  "100 * (1 - exp(-1 * $(fit_k) * x ** $(fit_n)))" /legend "fit"
+
+color 	gray
+line-style dashes
+plot  "100 * $(min_fit_volume)"
+plot  "100 * $(max_fit_volume)"
+
+legend-inside tl
+
+legend-line "\$n=$(fit_n)\$"
+legend-line "\$k=$(fit_k)\$"
+legend-line "\$X=1-e^{-$(fit_k)t^{$(fit_n)}}\$"
