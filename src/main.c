@@ -57,16 +57,13 @@ int main(int argc, char *argv[])
 	char* exe_path = dirname(exe_fullpath);
 	char* exe_name = basename(exe_fullpath);
 	
-	
-	
     short test_flag = 0;
     short debug_flag = 0;
     short help_flag = 0;
     
-    const char video_config_encoder[256]		= "libx264"; // mpeg4
-    const char video_config_ext[256]		    = "mp4";     // avi
- 
-    
+    char video_config_encoder[256] = "libx264";		
+    char video_config_ext[256]     = "mp4";
+
     char base_directory[PATH_MAX];
     getcwd(base_directory, PATH_MAX);
     
@@ -76,13 +73,13 @@ int main(int argc, char *argv[])
     static struct option long_options[] = {
         {"test",  0, 0, 't'},
         {"debug", 0, 0, 'd'},
-        {"ffmpeg-encoder",   0, 0, 'x'},
+        {"ffmpeg-encoder",   1, 0, 'x'},
         {"help",  0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
         {NULL, 0, NULL, 0}
     };
     int option_index = 0;
-    while ((flag = getopt_long(argc, argv, "htdg:o:", long_options, &option_index)) != -1)
+    while ((flag = getopt_long(argc, argv, "htdg:o:x:", long_options, &option_index)) != -1)
     {
         switch (flag)
         {
@@ -93,10 +90,11 @@ int main(int argc, char *argv[])
             debug_flag = 1;
             break;
         case 'x':
-            strcpy(optarg, video_config_encoder);
+            printf("encoder: %s\n", optarg);
+            strcpy(video_config_encoder, optarg);
             break;
         case 'o':
-            strcpy(optarg, base_directory);
+            strcpy(base_directory, optarg);
             break;
         case 'h':
             print_help(exe_name);
