@@ -1,4 +1,6 @@
 title 'Cluster grow'
+marker bullet
+line-style no
 plot @'$1:$2'
 xlabel '$\ln(t)$'
 ylabel '$\ln(-\ln(1-X))$'

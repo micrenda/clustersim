@@ -101,8 +101,8 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 	{
 		unsigned int i = 0;
 		
-		unsigned int time;
-		double       volume;
+		unsigned int time = 0;
+		double       volume = 0;
 			
 		record = strtok(line, ",;");
 		while(record != NULL)

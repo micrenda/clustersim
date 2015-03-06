@@ -473,7 +473,7 @@ int main(int argc, char *argv[])
         int status_mkdir = 0;
         do
         {
-            sprintf(output_directory, "%s/%s_%u", base_directory, basename, u);
+            sprintf(output_directory, "%s/%s_run%u", base_directory, basename, u);
             status_mkdir = recursive_mkdir(output_directory);
 
             if (status_mkdir == 0)
@@ -969,11 +969,45 @@ int main(int argc, char *argv[])
                 if (duration < 5)
                     printf("WARNING - The duration is %d time units but the video require %d frame per seconds: ffmpeg could not run properly.\n", duration, 5);
 
-
+				// We ensure the max size does not exceed full hd videos
+				unsigned int w,h;
+				unsigned int orig_w = space_sizes[render->axis_1];
+				unsigned int orig_h = space_sizes[render->axis_2];
+				
+				if (1.d * orig_w / orig_h >= 16.d/9.d)
+				{
+					if (orig_w > 1920)
+					{
+						w = 1920;
+						h = (orig_h * w / orig_w / 2) * 2; // Ensure we have an even number
+					}
+					else
+					{
+						w = (orig_w / 2) * 2;
+						h = (orig_h / 2) * 2;
+					}
+				}
+				else
+				{
+					if (orig_h > 1080)
+					{
+						h = 1080;
+						w = (orig_w * h / orig_h / 2) * 2; // Ensure we have an even number
+					}
+					else
+					{
+						h = (orig_h / 2) * 2;
+						w = (orig_w / 2) * 2;
+					}
+				}
+				 
+				
                 char ffmpeg_cmd[256];
-                sprintf(ffmpeg_cmd, "%s -loglevel panic -framerate 5 -i %s/frame_%%06d.png -c:v %s -r 30 %s/%s.%s",
+                sprintf(ffmpeg_cmd, "%s -loglevel panic -framerate 5 -i %s/frame_%%06d.png -vf scale=\"%u:%u\" -c:v %s -r 30 %s/%s.%s",
                     video_config_executable,
                     render->output_directory,
+                    w,
+                    h,
                     video_config_encoder,
                     output_directory,
                     render->name,
