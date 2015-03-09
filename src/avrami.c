@@ -146,12 +146,19 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 	
 	
 	// Calculating n and k
-	double coeff[2];
-	polynomialfit(fit_length, 2, fit_log_time, fit_log_volume, coeff);
-	
-	*fit_k = exp(coeff[0]);
-	*fit_n = coeff[1];
-	
+	if (fit_length > 0)
+	{
+		double coeff[2];
+		polynomialfit(fit_length, 2, fit_log_time, fit_log_volume, coeff);
+		
+		*fit_k = exp(coeff[0]);
+		*fit_n = coeff[1];	
+	}
+	else
+	{
+		*fit_k = 0;
+		*fit_n = 0;	
+	}
 	
 	fclose(out);
 	fclose(in);
