@@ -372,7 +372,6 @@ void get_adjacents_points(CommonStatus* status, unsigned int coordinates[status-
 {
     for (unsigned int a = 0; a < status->adjacents_count; a++)
     {
-
         add_relative_vector(status, adjacents[a], coordinates, status->adjacents[a]);
     }
 }

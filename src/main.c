@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <omp.h>
 #include "common.h"
 #include "le.h"
 #include "render.h"
@@ -61,6 +62,8 @@ int main(int argc, char *argv[])
     short debug_flag = 0;
     short help_flag = 0;
     
+    int num_threads = 1;
+    
     char video_config_encoder[256] = "libx264";		
     char video_config_ext[256]     = "mp4";
 
@@ -71,15 +74,16 @@ int main(int argc, char *argv[])
 
     int flag;
     static struct option long_options[] = {
-        {"test",  0, 0, 't'},
-        {"debug", 0, 0, 'd'},
+        {"test",    0, 0, 't'},
+        {"debug",   0, 0, 'd'},
+        {"threads", 1, 0, 'j'},
         {"ffmpeg-encoder",   1, 0, 'x'},
-        {"help",  0, 0, 'h'},
+        {"help",    0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
-        {NULL, 0, NULL, 0}
+        {NULL,      0, NULL, 0}
     };
     int option_index = 0;
-    while ((flag = getopt_long(argc, argv, "htdg:o:x:", long_options, &option_index)) != -1)
+    while ((flag = getopt_long(argc, argv, "htdg:o:x:j:", long_options, &option_index)) != -1)
     {
         switch (flag)
         {
@@ -100,6 +104,9 @@ int main(int argc, char *argv[])
             print_help(exe_name);
             exit(0);
             break;
+        case 'j':
+			num_threads = atoi(optarg);
+			break;
         case '?':
             print_help(exe_name);
             exit(-1);
@@ -121,6 +128,17 @@ int main(int argc, char *argv[])
     {
         exit(test_everything());
     }
+    
+    if (num_threads >= 1)
+	{
+		omp_set_num_threads(num_threads);
+		printf("Max number of threads: %d.\n", num_threads);
+	}
+	else
+	{
+		printf("The <num_threads> parameters specified with option -j must be not smaller than 1.\n");
+		exit(-1);
+	}
 
 	if (strcmp(base_directory, exe_path) == 0)
 	{
@@ -149,6 +167,7 @@ int main(int argc, char *argv[])
     char* cwd = NULL;
     cwd = getcwd(cwd, 0);
 
+	
     for (unsigned int cf = 0; cf < config_files_count; cf++)
     {
 
@@ -745,10 +764,11 @@ int main(int argc, char *argv[])
             // We grow all the cluster one by one. So there is no cluster who get a avantage
             for (unsigned int g = 1; g <= max_grow; g++)
             {
+				
+				#pragma omp parallel for
                 for (unsigned int c = 0; c < clusters_count; ++c)
                 {
                     Cluster* cluster = &clusters[c];
-
                     if (cluster->growing && g <= clusters_grows[c])
                     {
                         // searching all the point that are between radius and radius + grow and
@@ -773,7 +793,7 @@ int main(int argc, char *argv[])
 
                             unsigned int new_point_coordinates[common_status->dimensions];
                             add_relative_vector(common_status, new_point_coordinates, cluster_center, new_point_relative_coordinates);
-                            // We ignore the points outside the box
+                            // We ignore the points outside the space
                             if (is_inside(common_status, new_point_coordinates, space_sizes))
                             {
                                 unsigned long new_point_coordinates_encoded = encode_position_cartesian(common_status, new_point_coordinates);
@@ -781,14 +801,17 @@ int main(int argc, char *argv[])
                                 // Checking if the point is occupied by another cluster or not (if we are in Avrami mode we don't take care)
                                 if (avrami_mode)
                                 {
-									cluster->volume++;
-									found_growing_points = 1;
-									if (space[new_point_coordinates_encoded] == UINT_MAX)
+									#pragma omp critical
 									{
-										common_status->stat_pixel_grow[t]++;
-                                        common_status->stat_pixel_grow_total++;
+										cluster->volume++;
+										found_growing_points = 1;
+										if (space[new_point_coordinates_encoded] == UINT_MAX)
+										{
+											common_status->stat_pixel_grow[t]++;
+											common_status->stat_pixel_grow_total++;
+										}
+										space[new_point_coordinates_encoded] = cluster->id;
 									}
-									space[new_point_coordinates_encoded] = cluster->id;
 								}
                                 else if (space[new_point_coordinates_encoded] == UINT_MAX)
                                 {
@@ -814,16 +837,19 @@ int main(int argc, char *argv[])
                                         }
                                     }
 
+									
                                     if (found)
                                     {
-                                        //Ok, we can grow on this pixel
-                                        space[new_point_coordinates_encoded] = cluster->id;
-                                        common_status->stat_pixel_grow[t]++;
-                                        common_status->stat_pixel_grow_total++;
-                                        cluster->volume++;
-                                        found_growing_points = 1;
+										#pragma omp critical
+										{
+											//Ok, we can grow on this pixel
+											space[new_point_coordinates_encoded] = cluster->id;
+											common_status->stat_pixel_grow[t]++;
+											common_status->stat_pixel_grow_total++;
+											cluster->volume++;
+											found_growing_points = 1;
+                                        }
                                     }
-
                                 }
                             }
                         }
@@ -839,7 +865,6 @@ int main(int argc, char *argv[])
 								// There was no point available in the surface of the cluster
 								// Setting as not growing so we will not grow anymore this cluster
 								cluster->growing = 0;
-								break;
 							}
 						}
 						else
@@ -854,7 +879,6 @@ int main(int argc, char *argv[])
 								// There was no point available in the surface of the cluster
 								// Setting as not growing so we will not grow anymore this cluster
 								cluster->growing = 0;
-								break;
 							}
 						}
                     }
@@ -864,6 +888,7 @@ int main(int argc, char *argv[])
 
 
             // rendering
+            #pragma omp parallel for
             for (unsigned r = 0; r < render_count; r++)
             {
                 render(common_status, &renders[r], space, space_sizes, clusters, clusters_count, t, duration, renders[r].output_directory);
@@ -878,9 +903,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            // Writing CSV
-
-            /* print some text */
+            // writing CSV
             fprintf(csv_grow_file, "%u,%u,%u,%u,%u,%lu,%f\n",
                     t,
                     clusters_to_create[t],
@@ -889,6 +912,8 @@ int main(int argc, char *argv[])
                     common_status->stat_pixel_grow[t],
                     common_status->stat_pixel_grow_total,
                     1.d * common_status->stat_pixel_grow_total / common_status->space_volume);
+                    
+			fflush(csv_grow_file);
         }
 
 
