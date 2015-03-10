@@ -156,7 +156,7 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 	}
 	else
 	{
-		*fit_k = 0;
+		*fit_k = 1;
 		*fit_n = 0;	
 	}
 	
