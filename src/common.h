@@ -56,15 +56,15 @@ typedef struct SCommonStatus
     unsigned int** polar_moltiplicators;    // should be [][]
     double* min_polar_angles; // should be []
 
-    unsigned int  max_radius;
-    unsigned int  space_volume;
-    unsigned int* space_sizes;
+    unsigned int   max_radius;
+    unsigned long  space_volume;
+    unsigned int*  space_sizes;
 
     unsigned int adjacents_count;
     int** adjacents;
 
-    unsigned int*  stat_pixel_grow; // contains the amount of pixel grow at every time event
-    unsigned long  stat_pixel_grow_total; // contains the amount of pixel grow at every time event
+    unsigned int*  stat_pixel_grow; 	  // contains the amount of pixel grow at every time event
+    unsigned long  stat_pixel_grow_total; // contains the amount of pixel grow in total
 } CommonStatus;
 
 
