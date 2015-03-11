@@ -54,7 +54,7 @@ int recursive_mkdir(const char *dir);
 
 int main(int argc, char *argv[])
 {
-	char exe_fullpath[PATH_MAX];
+	char exe_fullpath[PATH_MAX] = "";
 	readlink("/proc/self/exe", exe_fullpath, sizeof(exe_fullpath)-1);
 	char* exe_path = dirname(exe_fullpath);
 	char* exe_name = basename(exe_fullpath);

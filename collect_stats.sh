@@ -27,6 +27,7 @@ then
 	exit;
 fi
 
+echo "#time,new_clusters_asked,new_clusters_created,clusters_total,volume_grow,volume_total,volume_totale_perc"
 
 for arg
 do
