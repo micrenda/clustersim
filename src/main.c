@@ -917,7 +917,83 @@ int main(int argc, char *argv[])
         }
 
 
+		/* 
+		 * Executing sanity checks
+		 * Now we check for every pixel in space that there is no point where these conditions are not meet:
+		 * 
+		 * 1) It is not assigned to any cluster
+		 * 2) The distance between them and the cluster center is less than cluster radius
+		 * 3) There is a 1st order neighbor assigned to the same cluster
+		 * 
+		 * It all these condition are met then it means that the growing algoritm has a problem and the results are unreliable
+		 * 
+		 */
+		 
+		printf("Executing pixel sanity checks ...\n");
+		unsigned long unhealth_pixels = 0;
+		 
+		#pragma omp parallel for
+		for (unsigned long p = 0; p < common_status->space_volume; p++)
+		{
+			if (space[p] == UINT_MAX)
+			{
+				// The pixed il free
+				unsigned int p_decoded[common_status->dimensions];
+				decode_position_cartesian(common_status, p_decoded, p);
+				
+				for (unsigned int c = 0; c < clusters_count; c++)
+				{
+					Cluster* cluster = &clusters[c];
+					unsigned int center_decoded[common_status->dimensions];
+					decode_position_cartesian(common_status, center_decoded, cluster->center);
+					
+					if (calculate_distance(common_status, p_decoded, center_decoded) < cluster->radius)
+					{
+						// The pixel is in the range of the cluster
+						
+						// Checking if there is an adiacent pixel of the same cluster
+						short found = 0;
 
+						unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
+						get_adjacents_points(common_status, p_decoded, adjacent_points);
+
+						for (unsigned int a = 0; a < common_status->adjacents_count; a++)
+						{
+							if (is_inside(common_status, adjacent_points[a], space_sizes))
+							{
+								unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
+								if (space[adjacent_encoded] == cluster->id)
+								{
+									found = 1;
+									break;
+								}
+							}
+						}
+
+						
+						if (found)
+						{
+							#pragma omp atomic
+							unhealth_pixels++;
+							
+							break; // No need to check for other clusters
+						}
+					}
+				}
+			}
+		}
+		
+		if (unhealth_pixels > 0)
+		{
+			printf("WARNING: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.3f %%)\n",
+				unhealth_pixels,
+				unhealth_pixels,
+				common_status->stat_pixel_grow_total,
+				100.d * unhealth_pixels / common_status->stat_pixel_grow_total);
+		}
+		else
+			printf("PASSED: sanity check passed.\n");
+		
 
 
         char csv_filename_clusters[256];
@@ -961,13 +1037,6 @@ int main(int argc, char *argv[])
 
         fclose(csv_clusters_file);
         fclose(csv_grow_file);
-
-
-
-        // preparing ffmpeg/avconv command
-        // ffmpeg -framerate 5 -i frame_%06d.png -c:v libx264 -r 30 movie.mp4
-        //
-
 
 
         const char* video_config_executable;  // ffmpeg
@@ -1073,22 +1142,6 @@ int main(int argc, char *argv[])
 
 		double  min_t, max_t, fit_n, fit_k, theo_n, theo_k;
 		compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k);
-
-        //// Create graphs with octave
-        //char octave_cmd[256];
-        //sprintf(octave_cmd, "%s/util/avrami-graph.m '%s' '%s' '%s' %d %f %f %s", exe_path, basename, output_directory, output_directory, common_status->dimensions, 0.10, 0.90, graph_type);
-
-        //printf("Running avrami-graph for '%s'... ", basename);
-        //int status = system(octave_cmd);
-        //if (status == 0)
-            //printf("DONE\n");
-        //else
-        //{
-            //printf("ERROR\n");
-            //printf("________________________________________\n");
-            //printf("Failed command:\n%s\n", octave_cmd);
-            //printf("________________________________________\n");
-        //}
         
         created_graphs(output_directory, output_directory, exe_path, min_t, max_t, avrami_fit_min_volume, avrami_fit_max_volume, fit_n, fit_k, theo_n, theo_k, debug_flag);
 
