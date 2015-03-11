@@ -400,7 +400,7 @@ short is_inside(CommonStatus* status, unsigned int coordinates[status->dimension
     short result = 1;
     for (unsigned short d = 0; d < status->dimensions; d++)
     {
-        result &= coordinates[d] >= 0 && coordinates[d] < space_sizes[d] - 1;
+        result &= coordinates[d] >= 0 && coordinates[d] < space_sizes[d];
     }
 
     return result;

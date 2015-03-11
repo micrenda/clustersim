@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
     short test_flag = 0;
     short debug_flag = 0;
     short help_flag = 0;
+    short keep_png_flag = 0;
     
     int num_threads = 1;
     
@@ -74,16 +75,17 @@ int main(int argc, char *argv[])
 
     int flag;
     static struct option long_options[] = {
-        {"test",    0, 0, 't'},
-        {"debug",   0, 0, 'd'},
-        {"threads", 1, 0, 'j'},
-        {"ffmpeg-encoder",   1, 0, 'x'},
-        {"help",    0, 0, 'h'},
+        {"test",     0, 0, 't'},
+        {"debug",    0, 0, 'd'},
+        {"threads",  1, 0, 'j'},
+        {"ffmpeg-encoder",   1, 0, '1'},
+        {"keep-png", 0, 0, '2'},
+        {"help",     0, 0, 'h'},
         {"output_dir", 1, 0, 'o'},
-        {NULL,      0, NULL, 0}
+        {NULL,       0, NULL, 0}
     };
     int option_index = 0;
-    while ((flag = getopt_long(argc, argv, "htdg:o:x:j:", long_options, &option_index)) != -1)
+    while ((flag = getopt_long(argc, argv, "htdg:o:1:2j:", long_options, &option_index)) != -1)
     {
         switch (flag)
         {
@@ -93,9 +95,12 @@ int main(int argc, char *argv[])
         case 'd':
             debug_flag = 1;
             break;
-        case 'x':
+        case '1':
             printf("encoder: %s\n", optarg);
             strcpy(video_config_encoder, optarg);
+            break;
+        case '2':
+            keep_png_flag = 1;
             break;
         case 'o':
             strcpy(base_directory, optarg);
@@ -384,8 +389,8 @@ int main(int argc, char *argv[])
         // The variable d is replaced with the dimensions of the system (1 => 1D, 2 => 2D, etc.).
 
         const char* cluster_position_gene_func = NULL;
+        
         const char* cluster_position_axis_func[common_status->dimensions];
-
         for(unsigned short d = 0; d < common_status->dimensions; d++)
             cluster_position_axis_func[d] = NULL;
 
@@ -398,7 +403,7 @@ int main(int argc, char *argv[])
                 dimension_to_label(axis_label, common_status, d);
                 sprintf(func_name, "cluster_position_func_%s", axis_label);
                 cluster_position_axis_func[d] = NULL;
-                config_setting_lookup_string(config_sim, func_name, &cluster_position_gene_func);
+                config_setting_lookup_string(config_sim, func_name, &cluster_position_axis_func[d]);
             }
         }
 
@@ -947,7 +952,7 @@ int main(int argc, char *argv[])
 					unsigned int center_decoded[common_status->dimensions];
 					decode_position_cartesian(common_status, center_decoded, cluster->center);
 					
-					if (calculate_distance(common_status, p_decoded, center_decoded) < cluster->radius)
+					if (calculate_distance(common_status, p_decoded, center_decoded) < (cluster->radius - 3))
 					{
 						// The pixel is in the range of the cluster
 						
@@ -976,6 +981,21 @@ int main(int argc, char *argv[])
 							#pragma omp atomic
 							unhealth_pixels++;
 							
+							if (debug_flag)
+							{
+								#pragma omp critical
+								{
+									printf("Found unassigned pixel: ");
+									printf("(");
+									
+									for (unsigned short d = 0; d < common_status->dimensions; d++)
+									{
+										if (d!=0) printf(", ");
+										printf("%u", p_decoded[d]);
+									}
+									printf(")\n");
+								}
+							}
 							break; // No need to check for other clusters
 						}
 					}
@@ -985,7 +1005,7 @@ int main(int argc, char *argv[])
 		
 		if (unhealth_pixels > 0)
 		{
-			printf("WARNING: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.3f %%)\n",
+			printf("WARNING: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
 				unhealth_pixels,
 				unhealth_pixels,
 				common_status->stat_pixel_grow_total,
@@ -1121,10 +1141,13 @@ int main(int argc, char *argv[])
 					if (!debug_flag)
 						printf("DONE\n");
                     
-                    // Deleting PNG files
-                    char del_cmd[256];
-                    sprintf(del_cmd, "rm -r '%s'", render->output_directory);
-                    system(del_cmd);
+                    if (!keep_png_flag)
+                    {
+						// Deleting PNG files
+						char del_cmd[256];
+						sprintf(del_cmd, "rm -r '%s'", render->output_directory);
+						system(del_cmd);
+                    }
                 }
                 else
                 {
@@ -1144,8 +1167,7 @@ int main(int argc, char *argv[])
 		compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k);
         
         created_graphs(output_directory, output_directory, exe_path, min_t, max_t, avrami_fit_min_volume, avrami_fit_max_volume, fit_n, fit_k, theo_n, theo_k, debug_flag);
-
-
+        
         // Freeing the memory
         for (unsigned int r = 0; r < render_count; r++)
             free_render(&renders[r]);
@@ -1222,9 +1244,10 @@ void print_help(char* exe_name)
     printf("  %s -h\n", exe_name);
     printf("\n");
     printf("      --ffmpeg-encoder <output_dir>            Set encoder used by ffmpeg (default libx264)\n");
+    printf("      --keep-png            				   Does not delete generated png files\n");
     printf("  -o  --output_dir     <output_dir>            Set output directory (default current working dir)\n");
     printf("  -t  --test                                   Execute internal tests\n");
-    printf("  -h  --help                                  Print this help menu\n");
+    printf("  -h  --help                                   Print this help menu\n");
     printf("\n");
 }
 
