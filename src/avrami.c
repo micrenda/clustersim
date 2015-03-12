@@ -75,9 +75,9 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 	
 	if (model->stat_creation_not_equal == 0)
 	{
-		if (model->stat_creation_equal == 1)
+		if (model->stat_creation_equal == 0)
 			type = AVRAMI_TYPE_INSTANT;
-		else if (model->stat_creation_equal > 1)
+		else
 			type = AVRAMI_TYPE_CONSTANT;
 	}
 	
@@ -233,9 +233,11 @@ void register_cluster_creation(AvramiModel* model, unsigned int creation)
 			else
 				model->stat_creation_not_equal++;
 		}
+		
+		model->last_cluster_creation = creation;
 	}
 	
-	model->last_cluster_creation = creation;
+	
 }
 
 void register_cluster_grow(AvramiModel* model, unsigned int grow)
@@ -251,7 +253,9 @@ void register_cluster_grow(AvramiModel* model, unsigned int grow)
 			else
 				model->stat_grow_not_equal++;
 		}
+		
+		model->last_cluster_grow = grow;
 	}
 	
-	model->last_cluster_grow = grow;
+	
 }
