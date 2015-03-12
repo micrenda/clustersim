@@ -27,7 +27,7 @@ then
 	exit;
 fi
 
-echo "# basename, dimensions, volume_space, volume_fill, clusters, fit_n, fit_k"
+echo "# basename, dimensions, volume_space, volume_fill, clusters, fit_n, fit_k, theo_n, theo_k"
 
 for arg
 do
