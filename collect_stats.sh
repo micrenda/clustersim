@@ -27,7 +27,7 @@ then
 	exit;
 fi
 
-echo "#time,new_clusters_asked,new_clusters_created,clusters_total,volume_grow,volume_total,volume_totale_perc"
+echo "# basename, dimensions, volume_space, volume_fill, clusters, fit_n, fit_k"
 
 for arg
 do
