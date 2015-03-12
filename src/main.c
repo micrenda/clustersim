@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         {"test",     0, 0, 't'},
         {"debug",    0, 0, 'd'},
         {"threads",  1, 0, 'j'},
-        {"repeats",  1, 0, 'r'},
+        {"repeat",   1, 0, 'r'},
         {"ffmpeg-encoder",   1, 0, '1'},
         {"keep-png", 0, 0, '2'},
         {"help",     0, 0, 'h'},
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         {NULL,       0, NULL, 0}
     };
     int option_index = 0;
-    while ((flag = getopt_long(argc, argv, "htdg:o:1:2j:", long_options, &option_index)) != -1)
+    while ((flag = getopt_long(argc, argv, "htdg:o:1:2j:r:", long_options, &option_index)) != -1)
     {
         switch (flag)
         {
@@ -786,7 +786,7 @@ int main(int argc, char *argv[])
 				for (unsigned int g = 1; g <= max_grow; g++)
 				{
 					
-					#pragma omp parallel for
+					#pragma omp parallel for shared(space,common_status)
 					for (unsigned int c = 0; c < clusters_count; ++c)
 					{
 						Cluster* cluster = &clusters[c];
@@ -864,11 +864,15 @@ int main(int argc, char *argv[])
 											#pragma omp critical
 											{
 												//Ok, we can grow on this pixel
-												space[new_point_coordinates_encoded] = cluster->id;
-												common_status->stat_pixel_grow[t]++;
-												common_status->stat_pixel_grow_total++;
 												cluster->volume++;
 												found_growing_points = 1;
+												
+												if (space[new_point_coordinates_encoded] == UINT_MAX)
+												{
+													common_status->stat_pixel_grow[t]++;
+													common_status->stat_pixel_grow_total++;
+												}
+												space[new_point_coordinates_encoded] = cluster->id;
 											}
 										}
 									}
@@ -952,8 +956,9 @@ int main(int argc, char *argv[])
 			 
 			printf("Executing pixel sanity checks ...\n");
 			unsigned long unhealth_pixels = 0;
+			unsigned long check_grow_pixels = 0;
 			 
-			#pragma omp parallel for
+			#pragma omp parallel for shared(unhealth_pixels, check_grow_pixels)
 			for (unsigned long p = 0; p < common_status->space_volume; p++)
 			{
 				if (space[p] == UINT_MAX)
@@ -1017,18 +1022,28 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
+				else
+				{
+					#pragma omp atomic
+					check_grow_pixels++;
+				}
 			}
+			
+			if (check_grow_pixels != common_status->stat_pixel_grow_total)
+				printf("WARNING 1/2: in variable 'common_status->stat_pixel_grow_total' we have %lu filled pixels but a final check resulted that we have %lu filled pixels. Please check the code.\n", common_status->stat_pixel_grow_total, check_grow_pixels);
+			else
+				printf("PASSED 1/2: filled pixel count check passed.\n");
 			
 			if (unhealth_pixels > 0)
 			{
-				printf("WARNING: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
+				printf("WARNING 2/2: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
 					unhealth_pixels,
 					unhealth_pixels,
 					common_status->stat_pixel_grow_total,
 					100.d * unhealth_pixels / common_status->stat_pixel_grow_total);
 			}
 			else
-				printf("PASSED: sanity check passed.\n");
+				printf("PASSED 2/2: unassigned pixel check passed.\n");
 			
 
 
@@ -1182,7 +1197,6 @@ int main(int argc, char *argv[])
 			double  min_t, max_t, fit_n, fit_k, theo_n, theo_k;
 			compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k);
 			
-			
 			char csv_filename_stats[256];
 			sprintf(csv_filename_stats, "%s/stats.csv", output_directory);
 			
@@ -1195,7 +1209,6 @@ int main(int argc, char *argv[])
 			fprintf(file_stats, "%u,",  clusters_count);
 			fprintf(file_stats, "%.10f,",  fit_n);
 			fprintf(file_stats, "%.10E\n",  fit_k);
-			
 			fclose(file_stats);
 			
 			
@@ -1279,6 +1292,7 @@ void print_help(char* exe_name)
     printf("\n");
     printf("      --ffmpeg-encoder <output_dir>            Set encoder used by ffmpeg (default libx264)\n");
     printf("      --keep-png            				   Does not delete generated png files\n");
+    printf("  -r  --repeat         <n>                 	   Repeat the simulation n times\n");
     printf("  -o  --output_dir     <output_dir>            Set output directory (default current working dir)\n");
     printf("  -t  --test                                   Execute internal tests\n");
     printf("  -h  --help                                   Print this help menu\n");
