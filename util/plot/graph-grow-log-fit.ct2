@@ -10,7 +10,12 @@ plot @'$1:$2' /where x>=0 /legend "real"
 marker no
 line-style solid
 math  /xrange "$(min_ln_t):$(max_ln_t)" /samples 200
-plot  "$(fit_n) * x + log($(fit_k))" /legend "fit"
+plot  "$(fit_n) * x + log($(fit_k))" /legend "fit (\$n=$(fit_n),k=$(fit_k)\$)"
+
+marker no
+line-style solid
+math  /xrange "$(min_ln_t):$(max_ln_t)" /samples 200
+plot  "$(theo_n) * x + log($(theo_k))" /legend "theory (\$n=$(theo_n),k=$(theo_k)\$)"
 
 color 	gray
 line-style dashes
@@ -18,6 +23,3 @@ plot  "log(-log(1-$(min_fit_volume)))"
 plot  "log(-log(1-$(max_fit_volume)))"
  
 legend-inside tl
-
-legend-line "n=$(fit_n)"
-legend-line "k=$(fit_k)"

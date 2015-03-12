@@ -607,6 +607,19 @@ int main(int argc, char *argv[])
 
 			le_init();
 			init_color_map();
+			
+			AvramiModel model;
+			
+			model.last_cluster_creation 	= 0;
+			model.last_cluster_grow 		= 0;
+			
+			model.stat_creation_zero 		= 0;
+			model.stat_creation_equal 		= 0;
+			model.stat_creation_not_equal	= 0;
+			
+			model.stat_grow_zero 		= 0;
+			model.stat_grow_equal 		= 0;
+			model.stat_grow_not_equal	= 0;
 
 
 			// Initialize the values of the cluster to create at every iteration;
@@ -667,9 +680,10 @@ int main(int argc, char *argv[])
 
 				clusters_to_create[t] = cnt;
 				max_clusters_count += cnt;
+				
+				register_cluster_creation(&model, cnt);
 			}
-
-
+			
 			// Contain the list of clusters we created
 			// The id of every cluster must be the same of the position in the array.
 			unsigned int clusters_count = 0;
@@ -779,6 +793,8 @@ int main(int argc, char *argv[])
 
 						if (clusters_grows[c] > max_grow)
 							max_grow = clusters_grows[c];
+							
+						register_cluster_grow(&model, grw);
 					}
 				}
 
@@ -1195,20 +1211,22 @@ int main(int argc, char *argv[])
 			sprintf(csv_filename_grow_log, "%s/grow_summary_log.csv", output_directory);
 
 			double  min_t, max_t, fit_n, fit_k, theo_n, theo_k;
-			compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k);
+			compute_avrami(csv_filename_grow, csv_filename_grow_log, avrami_fit_min_volume, avrami_fit_max_volume, &min_t, &max_t, &fit_n, &fit_k, &theo_n, &theo_k, &model, common_status);
 			
 			char csv_filename_stats[256];
 			sprintf(csv_filename_stats, "%s/stats.csv", output_directory);
 			
 			FILE* file_stats = fopen(csv_filename_stats, "w");
-			fprintf(file_stats, "# basename, dimensions, volume_space, volume_fill, clusters, fit_n, fit_k\n");
+			fprintf(file_stats, "# basename, dimensions, volume_space, volume_fill, clusters, fit_n, fit_k, theo_n, theo_k\n");
 			fprintf(file_stats, "%s,",  basename);
 			fprintf(file_stats, "%u,",  common_status->dimensions);
 			fprintf(file_stats, "%lu,", common_status->space_volume);
 			fprintf(file_stats, "%lu,", common_status->stat_pixel_grow_total);
 			fprintf(file_stats, "%u,",  clusters_count);
-			fprintf(file_stats, "%.10f,",  fit_n);
-			fprintf(file_stats, "%.10E\n",  fit_k);
+			fprintf(file_stats, "%.10f,",   fit_n);
+			fprintf(file_stats, "%.10E,",   fit_k);
+			fprintf(file_stats, "%.10f,",   theo_n);
+			fprintf(file_stats, "%.10E\n",  theo_k);
 			fclose(file_stats);
 			
 			

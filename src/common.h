@@ -3,6 +3,7 @@
 
 #include <linux/limits.h>
 
+
 typedef struct SCluster
 {
 	unsigned int id;
@@ -46,6 +47,28 @@ typedef struct SRender
 	unsigned int  colors_size;
 	unsigned int* colors;
 } Render;
+
+
+typedef enum AvramiType
+{ 
+	AVRAMI_TYPE_INSTANT, AVRAMI_TYPE_CONSTANT, AVRAMI_TYPE_OTHER
+} AvramiType;
+
+typedef struct SAvramiModel
+{
+	unsigned int last_cluster_creation;
+	unsigned int last_cluster_grow;
+	
+	unsigned int stat_creation_zero;
+	unsigned int stat_creation_equal;
+	unsigned int stat_creation_not_equal;
+	
+	unsigned int stat_grow_zero;
+	unsigned int stat_grow_equal;
+	unsigned int stat_grow_not_equal;
+	
+} AvramiModel;
+
 
 
 typedef struct SCommonStatus
