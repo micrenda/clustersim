@@ -220,6 +220,7 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 }
 
 
+
 void register_cluster_creation(AvramiModel* model, unsigned int creation)
 {
 	if (creation == 0)

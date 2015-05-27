@@ -1167,7 +1167,7 @@ int main(int argc, char *argv[])
 					 
 					
 					char ffmpeg_cmd[256];
-					sprintf(ffmpeg_cmd, "%s -loglevel panic -framerate 5 -i %s/frame_%%06d.png -vf scale=\"%u:%u\" -c:v %s -r 30 %s/%s.%s",
+					sprintf(ffmpeg_cmd, "%s -loglevel error -framerate 5 -i %s/frame_%%06d.png -vf scale=\"%u:%u\" -c:v %s -r 30 %s/%s.%s",
 						video_config_executable,
 						render->output_directory,
 						w,
