@@ -54,8 +54,8 @@ int recursive_mkdir(const char *dir);
 
 int main(int argc, char *argv[])
 {
-# Disabling for now
-####pragma pomp inst init pragma
+//Disabling for now
+//pragma pomp inst init pragma
 	char exe_fullpath[PATH_MAX] = "";
 	char exe_path[PATH_MAX] = "";
 	char exe_name[PATH_MAX] = "";
