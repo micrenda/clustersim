@@ -55,9 +55,11 @@ int recursive_mkdir(const char *dir);
 int main(int argc, char *argv[])
 {
 	char exe_fullpath[PATH_MAX] = "";
+	char exe_path[PATH_MAX] = "";
+	char exe_name[PATH_MAX] = "";
 	readlink("/proc/self/exe", exe_fullpath, sizeof(exe_fullpath)-1);
-	char* exe_path = dirname(exe_fullpath);
-	char* exe_name = basename(exe_fullpath);
+	strcpy(exe_path, dirname(exe_fullpath));
+	strcpy(exe_name, basename(exe_fullpath));
 	
     short test_flag = 0;
     short debug_flag = 0;
@@ -165,7 +167,7 @@ int main(int argc, char *argv[])
 	if (debug_flag)
 	{
 	printf("Exe path: %s\n", exe_path);	
-	printf("Exe name: %s\n", exe_path);	
+	printf("Exe name: %s\n", exe_name);	
 	}
 
     unsigned int config_files_count = argc - optind;
