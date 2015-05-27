@@ -45,11 +45,17 @@
                                         {
                                                 'cflags':               ['-O0 -g']
                                         },
+					{
+						'cflags':               ['-O2']
+					}
+                                ],
+				[	
+					'TARGET=="profile"',
                                         {
-                                                'cflags':               ['-O2'],
-                                        }
+                                        	'cflags':               ['$(OMPPFLAGS)']
+                                	}
+				]
 
-                                ]
                         ]
                 }
         ]
