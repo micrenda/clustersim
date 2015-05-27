@@ -3,6 +3,7 @@
 
 #include <linux/limits.h>
 
+
 typedef struct SCluster
 {
 	unsigned int id;
@@ -48,6 +49,28 @@ typedef struct SRender
 } Render;
 
 
+typedef enum AvramiType
+{ 
+	AVRAMI_TYPE_INSTANT, AVRAMI_TYPE_CONSTANT, AVRAMI_TYPE_OTHER
+} AvramiType;
+
+typedef struct SAvramiModel
+{
+	unsigned int last_cluster_creation;
+	unsigned int last_cluster_grow;
+	
+	unsigned int stat_creation_zero;
+	unsigned int stat_creation_equal;
+	unsigned int stat_creation_not_equal;
+	
+	unsigned int stat_grow_zero;
+	unsigned int stat_grow_equal;
+	unsigned int stat_grow_not_equal;
+	
+} AvramiModel;
+
+
+
 typedef struct SCommonStatus
 {
     unsigned short dimensions;
@@ -56,15 +79,15 @@ typedef struct SCommonStatus
     unsigned int** polar_moltiplicators;    // should be [][]
     double* min_polar_angles; // should be []
 
-    unsigned int  max_radius;
-    unsigned int  space_volume;
-    unsigned int* space_sizes;
+    unsigned int   max_radius;
+    unsigned long  space_volume;
+    unsigned int*  space_sizes;
 
     unsigned int adjacents_count;
     int** adjacents;
 
-    unsigned int*  stat_pixel_grow; // contains the amount of pixel grow at every time event
-    unsigned long  stat_pixel_grow_total; // contains the amount of pixel grow at every time event
+    unsigned int*  stat_pixel_grow; 	  // contains the amount of pixel grow at every time event
+    unsigned long  stat_pixel_grow_total; // contains the amount of pixel grow in total
 } CommonStatus;
 
 
