@@ -1,0 +1,1 @@
+1. Create a Voronoi diagram of the space and compare with the actual space occupation
