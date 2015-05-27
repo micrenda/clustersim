@@ -162,6 +162,12 @@ int main(int argc, char *argv[])
 	}
 
 
+	if (debug_flag)
+	{
+	printf("Exe path: %s\n", exe_path);	
+	printf("Exe name: %s\n", exe_path);	
+	}
+
     unsigned int config_files_count = argc - optind;
     if (config_files_count == 0)
     {
