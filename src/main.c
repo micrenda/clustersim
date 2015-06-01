@@ -752,7 +752,7 @@ int main(int argc, char *argv[])
 						// Location is free, creating a new cluster
 						unsigned int id = clusters_count++;
 						Cluster* cluster = &clusters[id];
-						// Initializing all the fiels
+						// Initializing all the fields
 						cluster->id = id;
 						cluster->creation_time = t;
 						cluster->radius = 1;
@@ -781,7 +781,7 @@ int main(int argc, char *argv[])
 				for (unsigned int c = 0; c < clusters_count; ++c)
 				{
 					Cluster* cluster = &clusters[c];
-					if (cluster->growing)
+					if (cluster->growing && cluster->creation_time < t)
 					{
 						le_setvar("d",common_status->dimensions);
 						le_setvar("t",t);
@@ -790,6 +790,7 @@ int main(int argc, char *argv[])
 						le_setvar("i",cluster->id);
 						le_setvar("r",cluster->radius);
 						le_setvar("v",cluster->volume);
+						
 						int grw = le_eval_integer(cookie_grow, &lua_msg);
 
 						if (grw < 0)
@@ -816,7 +817,7 @@ int main(int argc, char *argv[])
 					for (unsigned int c = 0; c < clusters_count; ++c)
 					{
 						Cluster* cluster = &clusters[c];
-						if (cluster->growing && g <= clusters_grows[c])
+						if (cluster->growing && cluster->creation_time < t && g <= clusters_grows[c])
 						{
 							// searching all the point that are between radius and radius + grow and
 							// if they are free, associating to the current cluster
@@ -836,7 +837,7 @@ int main(int argc, char *argv[])
 								decode_position_polar(common_status, new_point_angles, new_point_radius, s);
 
 								int new_point_relative_coordinates[common_status->dimensions];
-								convert_polar_angles_to_cartesian(common_status, new_point_angles, new_point_radius - 1, new_point_relative_coordinates);
+								convert_polar_angles_to_cartesian(common_status, new_point_angles, new_point_radius/* - 1*/, new_point_relative_coordinates);
 
 								unsigned int new_point_coordinates[common_status->dimensions];
 								add_relative_vector(common_status, new_point_coordinates, cluster_center, new_point_relative_coordinates);
@@ -905,7 +906,7 @@ int main(int argc, char *argv[])
 								}
 							}
 
-							if (avrami_mode)
+							if (!avrami_mode)
 							{
 								if (found_growing_points)
 								{

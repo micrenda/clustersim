@@ -232,7 +232,7 @@ void convert_polar_angles_to_cartesian(CommonStatus* status, double angles[statu
 
 double min_polar_angle(unsigned int radius)
 {
-    return acos( (2.d  * radius * radius - 1.d) / (2.d * radius * radius)) / 3.d;
+    return acos( (2.d  * radius * radius - 1.d) / (2.d * radius * radius));
 }
 
 // Calculate the distance between two points
