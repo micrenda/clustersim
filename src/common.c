@@ -395,12 +395,12 @@ void add_relative_vector(CommonStatus* status, unsigned int result[status->dimen
     }
 }
 
-short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions], unsigned int space_sizes[status->dimensions])
+short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions])
 {
     short result = 1;
     for (unsigned short d = 0; d < status->dimensions; d++)
     {
-        result &= coordinates[d] >= 0 && coordinates[d] < space_sizes[d];
+        result &= coordinates[d] >= 0 && coordinates[d] < status->space_sizes[d];
     }
 
     return result;

@@ -11,11 +11,21 @@ typedef struct SCluster
 	unsigned long  center; // encoded position
 	unsigned int   radius;
 
-	unsigned int   creation_time;
-    unsigned int   volume;
+	unsigned int    creation_time;
+    unsigned long   volume;
 
     unsigned short growing;
 } Cluster;
+
+typedef struct SSpacePixel
+{
+	Cluster*     cluster;
+	unsigned int fill_neighbours;
+	unsigned int fill_time;
+
+} SpacePixel;
+
+
 
 typedef enum SColorType
 {
@@ -117,7 +127,7 @@ void convert_cartesian_to_polar_angles(CommonStatus* status,  double angles[stat
 void convert_polar_angles_to_cartesian(CommonStatus* status, double angles[status->dimensions-1], unsigned int radius, int coordinates[status->dimensions]);
 
 void add_relative_vector(CommonStatus* status, unsigned int result[status->dimensions], unsigned int a[status->dimensions], int b[status->dimensions]);
-short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions], unsigned int space_sizes[status->dimensions]);
+short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions]);
 
 unsigned int get_surface_points_count(CommonStatus* status, unsigned int radius);
 

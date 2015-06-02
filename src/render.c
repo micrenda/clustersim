@@ -43,22 +43,22 @@ typedef struct  {
 pixel_t* pixel_at (bitmap_t* bitmap, int x, int y);
 unsigned int get_pixel_color(CommonStatus* common_status, Render* render, Cluster* cluster, unsigned int clusters_count, unsigned short t, unsigned short duration);
 void save_png_to_file (bitmap_t *bitmap, const char *path);
-void render2d(CommonStatus* common_status, Render* render, unsigned int space[], unsigned int space_sizes[], Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory);
-void render3d(CommonStatus* common_status, Render* render, unsigned int space[], unsigned int space_sizes[], Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory);
-short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned int current[common_status->dimensions], unsigned int space[common_status->space_volume]);
+void render2d(CommonStatus* common_status, Render* render, SpacePixel* space, Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory);
+void render3d(CommonStatus* common_status, Render* render, SpacePixel* space, Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory);
+short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned int current[common_status->dimensions], SpacePixel* space);
 
-void render(CommonStatus* common_status, Render* render, unsigned int space[], unsigned int space_sizes[], Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
+void render(CommonStatus* common_status, Render* render, SpacePixel* space, Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
 {
     switch(render->type)
     {
         case R_2D:
-            return render2d(common_status, render, space, space_sizes, clusters, clusters_count, t, duration, output_directory);
+            return render2d(common_status, render, space, clusters, clusters_count, t, duration, output_directory);
         case R_3D:
-            return render3d(common_status, render, space, space_sizes, clusters, clusters_count, t, duration, output_directory);
+            return render3d(common_status, render, space, clusters, clusters_count, t, duration, output_directory);
     }
 }
 
-void render3d(CommonStatus* common_status, Render* render, unsigned int space[], unsigned int space_sizes[], Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
+void render3d(CommonStatus* common_status, Render* render, SpacePixel* space, Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
 {
     if (render->axis_1 == USHRT_MAX)
     {
@@ -87,12 +87,12 @@ void render3d(CommonStatus* common_status, Render* render, unsigned int space[],
 
 
     // Creating a simplied version of space: we keep only surfaces and we remove the internal points
-    unsigned int*  simplified_space = malloc(common_status->space_volume * sizeof(unsigned int));
+    SpacePixel*  simplified_space = malloc(common_status->space_volume * sizeof(SpacePixel));
     unsigned long  simplified_grow_total = common_status->stat_pixel_grow_total;
 
     for (unsigned long p = 0; p < common_status->space_volume; p++)
     {
-        if (space[p] != UINT_MAX)
+        if (space[p].cluster != NULL)
         {
             unsigned int current[common_status->dimensions];
             decode_position_cartesian(common_status, current, p);
@@ -105,11 +105,11 @@ void render3d(CommonStatus* common_status, Render* render, unsigned int space[],
             for (unsigned int a = 0; a < common_status->adjacents_count; a++)
             {
 
-                if (is_inside(common_status, adjacent_points[a], space_sizes))
+                if (is_inside(common_status, adjacent_points[a]))
                 {
                     unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
 
-                    if (space[adjacent_encoded] != space[p])
+                    if (space[adjacent_encoded].cluster != space[p].cluster)
                     {
                          surrounded_by_same_cluster = 0;
                         break;
@@ -129,7 +129,7 @@ void render3d(CommonStatus* common_status, Render* render, unsigned int space[],
             }
             else
             {
-                simplified_space[p] = UINT_MAX; // It is an internal point. Removing to reduce the ply file size
+                (&simplified_space[p])->cluster = NULL; // It is an internal point. Removing to reduce the ply file size
                 simplified_grow_total--;
             }
 
@@ -193,14 +193,14 @@ void render3d(CommonStatus* common_status, Render* render, unsigned int space[],
     for (unsigned long p = 0; p < common_status->space_volume; p++)
     {
 
-        if (simplified_space[p] != UINT_MAX)
+        if (simplified_space[p].cluster != NULL)
         {
             unsigned int current[common_status->dimensions];
             decode_position_cartesian(common_status, current, p);
 
             if (should_be_rendered(common_status, render, current, simplified_space))
             {
-                Cluster* cluster = &clusters[simplified_space[p]];
+                Cluster* cluster = simplified_space[p].cluster;
 
                 unsigned int pos_i = current[render->axis_1];
                 unsigned int pos_j = current[render->axis_2];
@@ -223,7 +223,7 @@ void render3d(CommonStatus* common_status, Render* render, unsigned int space[],
     free(simplified_space);
 }
 
-void render2d(CommonStatus* common_status, Render* render, unsigned int space[], unsigned int space_sizes[], Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
+void render2d(CommonStatus* common_status, Render* render, SpacePixel* space, Cluster* clusters, unsigned int clusters_count, unsigned int t, unsigned int duration, char* output_directory)
 {
 
     if (render->axis_1 == USHRT_MAX)
@@ -239,8 +239,8 @@ void render2d(CommonStatus* common_status, Render* render, unsigned int space[],
     }
 
 
-    unsigned width  = space_sizes[render->axis_1];
-    unsigned height = space_sizes[render->axis_2];
+    unsigned width  = common_status->space_sizes[render->axis_1];
+    unsigned height = common_status->space_sizes[render->axis_2];
 
 
     bitmap_t bmp;
@@ -266,7 +266,7 @@ void render2d(CommonStatus* common_status, Render* render, unsigned int space[],
 
     for (unsigned long p = 0; p < common_status->space_volume; p++)
     {
-        if (space[p] != UINT_MAX)
+        if (space[p].cluster != NULL)
         {
 
             unsigned int current[common_status->dimensions];
@@ -279,7 +279,7 @@ void render2d(CommonStatus* common_status, Render* render, unsigned int space[],
                 unsigned int pos_i = current[render->axis_1];
                 unsigned int pos_j = current[render->axis_2];
 
-                Cluster* cluster = &clusters[space[p]];
+                Cluster* cluster = space[p].cluster;
                 pixel_t * pixel = pixel_at (&bmp, pos_i, pos_j);
 
                 unsigned int color = get_pixel_color(common_status, render, cluster, clusters_count, t, duration);
@@ -300,7 +300,7 @@ void render2d(CommonStatus* common_status, Render* render, unsigned int space[],
 
 }
 
-short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned int current[common_status->dimensions], unsigned int space[common_status->space_volume])
+short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned int current[common_status->dimensions], SpacePixel* space)
 {
     short to_be_rendered = 1;
     for (unsigned short d = 0; d < common_status->dimensions; d++)
@@ -321,7 +321,7 @@ short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned
 
             for (cursor[d] = render->cut_levels[d]; cursor[d] > current[d]; cursor[d]--)
             {
-                trasparent &= space[encode_position_cartesian(common_status, cursor)] == UINT_MAX;
+                trasparent &= space[encode_position_cartesian(common_status, cursor)].cluster == NULL;
             }
 
             to_be_rendered &= trasparent;
@@ -332,7 +332,7 @@ short  should_be_rendered(CommonStatus* common_status,  Render* render, unsigned
 
             for (cursor[d] = render->cut_levels[d]; cursor[d] < current[d]; cursor[d]++)
             {
-                trasparent &= space[encode_position_cartesian(common_status, cursor)] == UINT_MAX;
+                trasparent &= space[encode_position_cartesian(common_status, cursor)].cluster == NULL;
             }
 
             to_be_rendered &= trasparent;
