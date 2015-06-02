@@ -44,6 +44,7 @@ void err_config(config_t* config);
 void lower_string(char* s);
 void print_help(char* exe_name);
 void check_lua_error(char** lua_msg);
+void mark_space(unsigned int* space, unsigned int* space_free_adj, CommonStatus* common_status);
 
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz);
 char *dirname(char *path);
@@ -295,10 +296,6 @@ int main(int argc, char *argv[])
 			}
 
 
-			// Use the real mode or the Avrami theoretical model
-			int avrami_mode = 0;
-			if (config_setting_lookup_int(config_sim, "avrami_mode", &avrami_mode) == CONFIG_TRUE);
-
 			// Get the volume limits to calculated avrami coefficients (NB: this values is a percentual)
 			double avrami_fit_min_volume = 0.0;
 			double avrami_fit_max_volume = 1.0;
@@ -341,12 +338,19 @@ int main(int argc, char *argv[])
 			// a pixel. Every pixed (32bit) is the id of the group it belong to.
 			// A function will take care to translate a x,y,z coordinates to the element of the space
 
-			//unsigned int space[common_status->space_volume];
 			unsigned int* space = malloc(common_status->space_volume * sizeof(unsigned int));
+			// Keep trace about how many free locations are adjacent. It is initialized with the number of neighbor.
+			unsigned int* space_adj_clusters = malloc(common_status->space_volume * sizeof(unsigned int));
+
 
 			// all location are free at the beginning
 			for (unsigned int p = 0; p < common_status->space_volume; p++)
+			{
 				space[p] = UINT_MAX;
+				space_adj_clusters[p] = 0;
+			}
+
+			
 
 			// Formula to be used to calculate the cluster to be created at any time frame
 			//
@@ -507,11 +511,6 @@ int main(int argc, char *argv[])
 				sprintf(common_func_id, "common_func_%u", f+1);
 				config_setting_lookup_string(config_sim, common_func_id, &common_funcs[f]);
 			}
-
-
-
-
-
 
 
 			// ATTENTION
@@ -747,7 +746,7 @@ int main(int argc, char *argv[])
 					// Critical moment: is the space position already occupied by another cluster (if we are in Avrami mode we don't take care)
 					unsigned long position_encoded = encode_position_cartesian(common_status, coordinates);
 
-					if (space[position_encoded] == UINT_MAX || avrami_mode)
+					if (space[position_encoded] == UINT_MAX)
 					{
 						// Location is free, creating a new cluster
 						unsigned int id = clusters_count++;
@@ -764,13 +763,7 @@ int main(int argc, char *argv[])
 
 						clusters_created[t]++;
 						
-						if (space[position_encoded] == UINT_MAX)
-						{
-							common_status->stat_pixel_grow[t]++; // a new cluster has dimensions 1 pixel
-							common_status->stat_pixel_grow_total++;
-						}
-						
-						space[position_encoded] = id;
+						mark_space(space, space_free_adj, common_status);
 					}
 				}
 
@@ -846,22 +839,8 @@ int main(int argc, char *argv[])
 								{
 									unsigned long new_point_coordinates_encoded = encode_position_cartesian(common_status, new_point_coordinates);
 
-									// Checking if the point is occupied by another cluster or not (if we are in Avrami mode we don't take care)
-									if (avrami_mode)
-									{
-										#pragma omp critical
-										{
-											cluster->volume++;
-											found_growing_points = 1;
-											if (space[new_point_coordinates_encoded] == UINT_MAX)
-											{
-												common_status->stat_pixel_grow[t]++;
-												common_status->stat_pixel_grow_total++;
-											}
-											space[new_point_coordinates_encoded] = cluster->id;
-										}
-									}
-									else if (space[new_point_coordinates_encoded] == UINT_MAX)
+									// Checking if the point is occupied by another cluster or not
+									if (space[new_point_coordinates_encoded] == UINT_MAX)
 									{
 										// The point is free.
 										// Checking if there is an adiacent pixel of the same cluster
@@ -906,33 +885,18 @@ int main(int argc, char *argv[])
 								}
 							}
 
-							if (!avrami_mode)
+							
+							if (found_growing_points)
 							{
-								if (found_growing_points)
-								{
-									cluster->radius = r;
-								}
-								else
-								{
-									// There was no point available in the surface of the cluster
-									// Setting as not growing so we will not grow anymore this cluster
-									cluster->growing = 0;
-								}
+								cluster->radius = r;
 							}
 							else
 							{
-								if (found_growing_points)
-								{
-									cluster->radius = r;
-								}
-								
-								if (r >= common_status->max_radius)
-								{
-									// There was no point available in the surface of the cluster
-									// Setting as not growing so we will not grow anymore this cluster
-									cluster->growing = 0;
-								}
+								// There was no point available in the surface of the cluster
+								// Setting as not growing so we will not grow anymore this cluster
+								cluster->growing = 0;
 							}
+							
 						}
 					}
 				}
@@ -1309,6 +1273,26 @@ int recursive_mkdir(const char *dir)
 	return mkdir(tmp, S_IRWXU);
 }
 
+
+void mark_space(unsigned int* space, unsigned int* space_adj_clusters, unsigned int current_time, unsigned int cluster_id, CommonStatus* common_status)
+{
+	if (space[cluster_id] == UINT_MAX)
+	{
+		common_status->stat_pixel_grow[current_time]++;
+		common_status->stat_pixel_grow_total++;
+		
+		space[position_encoded] = id;
+		
+		for ()
+		
+		
+	}
+	else
+	{
+		printf("INTERNAL ERROR - Tried to mark a space position already marked. Contact developer.\n");
+		exit(5);
+	}
+}
 
 
 
