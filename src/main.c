@@ -763,7 +763,6 @@ int main(int argc, char *argv[])
 						clusters_created[t]++;
 						
 						
-						
 						mark_space(space, t, position_encoded, cluster, common_status);
 					}
 				}
@@ -807,6 +806,7 @@ int main(int argc, char *argv[])
 				
 				for (unsigned int g = 1; g <= max_grow; g++)
 				{
+					#pragma omp parallel for shared(space,common_status)
 					for (unsigned long p = 0; p < common_status->space_volume; p++)
 					{
 						SpacePixel* space_pixel = &space[p];
@@ -847,7 +847,10 @@ int main(int argc, char *argv[])
 									
 									if (found)
 									{
-										mark_space(space, t, p, cluster, common_status);
+										#pragma omp critical
+										{
+											mark_space(space, t, p, cluster, common_status);
+										}
 									}
 								}
 							}
