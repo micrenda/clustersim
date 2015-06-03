@@ -245,7 +245,7 @@ unsigned int calculate_distance(CommonStatus* status, unsigned int point1[status
         distance_pow2 += (point2[d] - point1[d]) * (point2[d] - point1[d]);
     }
 
-    return floor(sqrt(distance_pow2));
+    return round(sqrt(distance_pow2));
 }
 
 unsigned int get_surface_points_count(CommonStatus* status, unsigned int radius)

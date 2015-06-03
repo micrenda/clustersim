@@ -701,8 +701,8 @@ int main(int argc, char *argv[])
 			unsigned int clusters_created[duration];
 			
 			// Initialize random seed
-			time_t t;
-			srand((unsigned) time(&t));
+			time_t tt;
+			srand((unsigned) time(&tt));
 
 			printf("\n");
 			// Now we start to dance, starting simulation
@@ -770,6 +770,8 @@ int main(int argc, char *argv[])
 
 				// growing the clusters
 				unsigned int clusters_grows[clusters_count];
+				for (unsigned int c = 0; c < clusters_count; c++) clusters_grows[c] = 0;
+				
 				unsigned int max_grow = 0;
 
 				for (unsigned int c = 0; c < clusters_count; ++c)
@@ -803,56 +805,56 @@ int main(int argc, char *argv[])
 					}
 				}
 				
-				unsigned long pi = 0;
-				for (unsigned long p = 0; p < common_status->space_volume; p++)
+				for (unsigned int g = 1; g <= max_grow; g++)
 				{
-					SpacePixel* space_pixel = &space[p];
-					if (space_pixel->fill_neighbours > 0 && space_pixel->fill_neighbours < common_status->adjacents_count - 1 && space_pixel->cluster == NULL)
+					for (unsigned long p = 0; p < common_status->space_volume; p++)
 					{
-
-						for (unsigned int c = 0; c < clusters_count; ++c)
+						SpacePixel* space_pixel = &space[p];
+						if (space_pixel->fill_neighbours > 0 && space_pixel->cluster == NULL)
 						{
-							Cluster* cluster = &clusters[c];
-							
-							unsigned int center_decoded[common_status->dimensions];
-							decode_position_cartesian(common_status, center_decoded, cluster->center);
-							
 							unsigned int p_decoded[common_status->dimensions];
 							decode_position_cartesian(common_status, p_decoded, p);
-							
-							if (calculate_distance(common_status, center_decoded, p_decoded) <= cluster->radius + clusters_grows[c] && space_pixel->cluster == NULL)
+
+							for (unsigned int c = 0; c < clusters_count; ++c)
 							{
-								// Checking if there is a near point of the same cluster
-								short found = 0;
-
-								unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
-								get_adjacents_points(common_status, p_decoded, adjacent_points);
-
-								for (unsigned int a = 0; a < common_status->adjacents_count; a++)
+								Cluster* cluster = &clusters[c];
+								
+								unsigned int center_decoded[common_status->dimensions];
+								decode_position_cartesian(common_status, center_decoded, cluster->center);
+								
+								if (g <= clusters_grows[c] && calculate_distance(common_status, center_decoded, p_decoded) < cluster->radius + g && space_pixel->cluster == NULL)
 								{
-									if (is_inside(common_status, adjacent_points[a]))
+									// Checking if there is a near point of the same cluster
+									short found = 0;
+
+									unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
+									get_adjacents_points(common_status, p_decoded, adjacent_points);
+
+									for (unsigned int a = 0; a < common_status->adjacents_count; a++)
 									{
-										unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
-										SpacePixel* adjacent_pixel = &space[adjacent_encoded]; 
-										if (adjacent_pixel->cluster != NULL && adjacent_pixel->cluster == cluster && adjacent_pixel->fill_time < t)
+										if (is_inside(common_status, adjacent_points[a]))
 										{
-											found = 1;
-											break;
+											unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
+											SpacePixel* adjacent_pixel = &space[adjacent_encoded]; 
+											if (adjacent_pixel->cluster != NULL && adjacent_pixel->cluster == cluster)
+											{
+												found = 1;
+												break;
+											}
 										}
 									}
-								}
-								
-								
-								if (found)
-								{
-									mark_space(space, t, p, cluster, common_status);
-									//printf("p=%lu (%lu)\n", pi++, p);
+									
+									
+									if (found)
+									{
+										mark_space(space, t, p, cluster, common_status);
+									}
 								}
 							}
 						}
 					}
 				}
-
+				
 				for (unsigned int c = 0; c < clusters_count; ++c)
 				{
 					Cluster* cluster = &clusters[c];
