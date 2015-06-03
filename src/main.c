@@ -807,11 +807,12 @@ int main(int argc, char *argv[])
 				for (unsigned long p = 0; p < common_status->space_volume; p++)
 				{
 					SpacePixel* space_pixel = &space[p];
-					if (space_pixel->fill_neighbours > 0 && space_pixel->fill_neighbours < common_status->adjacents_count && space_pixel->cluster == NULL)
+					if (space_pixel->fill_neighbours > 0 && space_pixel->fill_neighbours < common_status->adjacents_count - 1 && space_pixel->cluster == NULL)
 					{
+
 						for (unsigned int c = 0; c < clusters_count; ++c)
 						{
-							Cluster* cluster = space_pixel->cluster;
+							Cluster* cluster = &clusters[c];
 							
 							unsigned int center_decoded[common_status->dimensions];
 							decode_position_cartesian(common_status, center_decoded, cluster->center);
@@ -819,7 +820,7 @@ int main(int argc, char *argv[])
 							unsigned int p_decoded[common_status->dimensions];
 							decode_position_cartesian(common_status, p_decoded, p);
 							
-							if (calculate_distance(common_status, center_decoded, p_decoded) <= cluster->radius + clusters_grows[c])
+							if (calculate_distance(common_status, center_decoded, p_decoded) <= cluster->radius + clusters_grows[c] && space_pixel->cluster == NULL)
 							{
 								// Checking if there is a near point of the same cluster
 								short found = 0;
@@ -832,8 +833,8 @@ int main(int argc, char *argv[])
 									if (is_inside(common_status, adjacent_points[a]))
 									{
 										unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
-
-										if (space[adjacent_encoded].cluster == cluster)
+										SpacePixel* adjacent_pixel = &space[adjacent_encoded]; 
+										if (adjacent_pixel->cluster != NULL && adjacent_pixel->cluster == cluster && adjacent_pixel->fill_time < t)
 										{
 											found = 1;
 											break;
@@ -845,7 +846,7 @@ int main(int argc, char *argv[])
 								if (found)
 								{
 									mark_space(space, t, p, cluster, common_status);
-									printf("p=%lu (%lu)\n", pi++, p);
+									//printf("p=%lu (%lu)\n", pi++, p);
 								}
 							}
 						}
