@@ -194,9 +194,10 @@ int main(int argc, char *argv[])
     char* cwd = NULL;
     cwd = getcwd(cwd, 0);
 
-	
+	#pragma omp parallel for if (repeats == 1 && config_files_count >= num_threads)
     for (unsigned int cf = 0; cf < config_files_count; cf++)
     {
+		#pragma omp parallel for if (repeats >= num_threads)
 		for (unsigned int r = 0; r < repeats; r++)
 		{
 			printf("========================================\n");
@@ -339,7 +340,7 @@ int main(int argc, char *argv[])
 			// A function will take care to translate a x,y,z coordinates to the element of the space
 			SpacePixel* space = malloc(common_status->space_volume * sizeof(SpacePixel));
 
-
+			printf("Memory allocation: %.3f MBytes (%lu bytes/px x %lu)\n", 1.0 * common_status->space_volume * sizeof(SpacePixel) / (1024 * 1024), sizeof(SpacePixel), common_status->space_volume);
 
 			// all location are free at the beginning
 			for (unsigned int p = 0; p < common_status->space_volume; p++)
