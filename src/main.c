@@ -194,13 +194,18 @@ int main(int argc, char *argv[])
     char* cwd = NULL;
     cwd = getcwd(cwd, 0);
 
-	#pragma omp parallel for if (repeats == 1 && config_files_count >= num_threads)
     for (unsigned int cf = 0; cf < config_files_count; cf++)
     {
-		#pragma omp parallel for if (repeats >= num_threads)
 		for (unsigned int r = 0; r < repeats; r++)
 		{
 			printf("========================================\n");
+
+			time_t time_start;
+			time(&time_start);
+			
+			char time_start_str[256];
+			strftime(time_start_str, 256, "%Y-%m-%d %k:%M:%S %z", localtime(&time_start));
+			printf("Start time: %s\n", time_start_str);
 
 			char* config_file_name = config_files[cf];
 			strcpy (config_full_path, "");
@@ -1281,6 +1286,21 @@ int main(int argc, char *argv[])
 			free_common(common_status);
 			config_destroy(config);
 			free(config);
+			
+			
+			time_t time_end;
+			time(&time_end);
+			
+			char time_end_str[256];
+			strftime(time_end_str, 256, "%Y-%m-%d %k:%M:%S %z", localtime(&time_end));
+			
+			double time_diff = difftime(time_end, time_start);
+			
+			int hours   = floor(time_diff / 3600);
+			int minutes = floor(fmod(time_diff, 3600) / 60);
+			int seconds = floor(fmod(time_diff, 60));
+			
+			printf("End time: %s (duration: %dh:%dm:%ds)\n",  time_end_str, hours, minutes, seconds);
 		}
 
     }
