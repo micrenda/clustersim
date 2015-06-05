@@ -303,8 +303,8 @@ int main(int argc, char *argv[])
 
 
 			// Get the volume limits to calculated avrami coefficients (NB: this values is a percentual)
-			double avrami_fit_min_volume = 0.0;
-			double avrami_fit_max_volume = 1.0;
+			double avrami_fit_min_volume = 0.01;
+			double avrami_fit_max_volume = 0.99;
 			
 			config_setting_lookup_float(config_sim, "avrami_fit_min_volume", &avrami_fit_min_volume);
 			config_setting_lookup_float(config_sim, "avrami_fit_max_volume", &avrami_fit_max_volume);

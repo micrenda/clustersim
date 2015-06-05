@@ -201,7 +201,7 @@ void compute_avrami(char* input_grow_summary, char* output_grow_summary_log, dou
 	
 	
 	// Calculating n and k
-	if (fit_length > 0)
+	if (fit_length > 1)
 	{
 		double coeff[2];
 		polynomialfit(fit_length, 2, fit_log_time, fit_log_volume, coeff);
