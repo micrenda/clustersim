@@ -352,7 +352,6 @@ int main(int argc, char *argv[])
 			{
 				SpacePixel* pixel = &space[p];
 				pixel->cluster = NULL;
-				pixel->fill_time       = UINT_MAX;
 				pixel->fill_neighbours = 0;
 			}
 
@@ -871,107 +870,6 @@ int main(int argc, char *argv[])
 				}
 
 
-				//// We grow all the cluster one by one. So there is no cluster who get a avantage
-				//for (unsigned int g = 1; g <= max_grow; g++)
-				//{
-					
-					//#pragma omp parallel for shared(space,common_status)
-					//for (unsigned int c = 0; c < clusters_count; ++c)
-					//{
-						//Cluster* cluster = &clusters[c];
-						//if (cluster->growing && cluster->creation_time < t && g <= clusters_grows[c])
-						//{
-							//// searching all the point that are between radius and radius + grow and
-							//// if they are free, associating to the current cluster
-
-							//unsigned int cluster_center[common_status->dimensions];
-							//decode_position_cartesian(common_status, cluster_center, cluster->center);
-
-							//unsigned int r = cluster->radius + 1;
-
-							//unsigned int surface_point_count = get_surface_points_count(common_status, r);
-							//short found_growing_points = 0;
-
-							//for (unsigned int s = 0; s < surface_point_count; s++)
-							//{
-								//unsigned int new_point_radius = r;
-								//double new_point_angles[common_status->dimensions - 1];
-								//decode_position_polar(common_status, new_point_angles, new_point_radius, s);
-
-								//int new_point_relative_coordinates[common_status->dimensions];
-								//convert_polar_angles_to_cartesian(common_status, new_point_angles, new_point_radius/* - 1*/, new_point_relative_coordinates);
-
-								//unsigned int new_point_coordinates[common_status->dimensions];
-								//add_relative_vector(common_status, new_point_coordinates, cluster_center, new_point_relative_coordinates);
-								//// We ignore the points outside the space
-								//if (is_inside(common_status, new_point_coordinates))
-								//{
-									//unsigned long new_point_coordinates_encoded = encode_position_cartesian(common_status, new_point_coordinates);
-
-									//// Checking if the point is occupied by another cluster or not
-									//if (space[new_point_coordinates_encoded] == UINT_MAX)
-									//{
-										//// The point is free.
-										//// Checking if there is an adiacent pixel of the same cluster
-										//short found = 0;
-
-										//unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
-										//get_adjacents_points(common_status, new_point_coordinates, adjacent_points);
-
-										//for (unsigned int a = 0; a < common_status->adjacents_count; a++)
-										//{
-
-											//if (is_inside(common_status, adjacent_points[a]))
-											//{
-												//unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
-
-												//if (space[adjacent_encoded] == cluster->id)
-												//{
-													//found = 1;
-													//break;
-												//}
-											//}
-										//}
-
-										
-										//if (found)
-										//{
-											//#pragma omp critical
-											//{
-												////Ok, we can grow on this pixel
-												//cluster->volume++;
-												//found_growing_points = 1;
-												
-												//if (space[new_point_coordinates_encoded] == UINT_MAX)
-												//{
-													//common_status->stat_pixel_grow[t]++;
-													//common_status->stat_pixel_grow_total++;
-												//}
-												//space[new_point_coordinates_encoded] = cluster->id;
-											//}
-										//}
-									//}
-								//}
-							//}
-
-							
-							//if (found_growing_points)
-							//{
-								//cluster->radius = r;
-							//}
-							//else
-							//{
-								//// There was no point available in the surface of the cluster
-								//// Setting as not growing so we will not grow anymore this cluster
-								//cluster->growing = 0;
-							//}
-							
-						//}
-					//}
-				//}
-
-
-
 				// rendering
 				#pragma omp parallel for
 				for (unsigned r = 0; r < render_count; r++)
@@ -1368,7 +1266,6 @@ void mark_space(SpacePixel* space, unsigned int current_time, unsigned long posi
 		
 		SpacePixel* space_pixel = &space[position_encoded];
 		space_pixel->cluster = cluster;
-		space_pixel->fill_time = current_time;
 		
 		unsigned int position_decoded[common_status->dimensions];
 		decode_position_cartesian(common_status, position_decoded, position_encoded);

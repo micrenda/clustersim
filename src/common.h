@@ -21,8 +21,6 @@ typedef struct SSpacePixel
 {
 	Cluster*     cluster;
 	unsigned int fill_neighbours;
-	unsigned int fill_time;
-
 } SpacePixel;
 
 
