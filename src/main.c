@@ -913,12 +913,28 @@ int main(int argc, char *argv[])
 			 */
 			 
 			printf("Executing pixel sanity checks ...\n");
-			unsigned long unhealth_pixels = 0;
-			unsigned long check_grow_pixels = 0;
+			unsigned long unhealth_pixels     = 0;
+			unsigned long check_grow_pixels   = 0;
+			unsigned int  unhealth_neighbours = 0;
 			 
 			#pragma omp parallel for shared(unhealth_pixels, check_grow_pixels)
 			for (unsigned long p = 0; p < common_status->space_volume; p++)
 			{
+				
+				if (space[p].fill_neighbours > common_status->adjacents_count)
+				{
+					#pragma omp atomic
+					unhealth_neighbours++;
+					
+					if (debug_flag)
+					{
+						#pragma omp critical
+						{
+							printf("Found unhealt neighbour count at p=%lu\n", p);
+						}
+					}
+				}
+				
 				if (space[p].cluster == NULL)
 				{
 					// The pixed is free
@@ -988,21 +1004,27 @@ int main(int argc, char *argv[])
 			}
 			
 			if (check_grow_pixels != common_status->stat_pixel_grow_total)
-				printf("WARNING 1/2: in variable 'common_status->stat_pixel_grow_total' we have %lu filled pixels but a final check resulted that we have %lu filled pixels. Please check the code.\n", common_status->stat_pixel_grow_total, check_grow_pixels);
+				printf("WARNING 1/3: in variable 'common_status->stat_pixel_grow_total' we have %lu filled pixels but a final check resulted that we have %lu filled pixels. Please check the code.\n", common_status->stat_pixel_grow_total, check_grow_pixels);
 			else
-				printf("PASSED 1/2: filled pixel count check passed.\n");
+				printf("PASSED 1/3: filled pixel count check passed.\n");
 			
 			if (unhealth_pixels > 0)
 			{
-				printf("WARNING 2/2: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
+				printf("WARNING 2/3: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
 					unhealth_pixels,
 					unhealth_pixels,
 					common_status->stat_pixel_grow_total,
 					100.d * unhealth_pixels / common_status->stat_pixel_grow_total);
 			}
 			else
-				printf("PASSED 2/2: unassigned pixel check passed.\n");
-			
+				printf("PASSED 2/3: unassigned pixel check passed.\n");
+				
+			if (unhealth_neighbours > 0)
+			{
+				printf("WARNING 3/3: it was found some pixels with a space->fill_neighbours property with a value (%d) bigger than %d. Please check the code.\n", unhealth_neighbours, common_status->adjacents_count);
+			}
+			else
+				printf("PASSED 3/3: unassigned unhealth neighbours check passed.\n");
 
 
 			char csv_filename_clusters[256];
