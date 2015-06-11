@@ -1,6 +1,0 @@
-#time,new_clusters_asked,new_clusters_created,clusters_total,volume_grow,volume_total,volume_totale_perc
-0,50,50,50,50,50,0.000128
-1,0,0,50,10119,10169,0.026033
-2,0,0,50,60576,70745,0.181107
-3,0,0,50,133723,204468,0.523438
-4,0,0,50,115468,319936,0.819036
