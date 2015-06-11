@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-OPTS=`getopt -o t -l target: -- "$@"`
+OPTS=`getopt -o s:d: -- "$@"`
 if [ $? != 0 ]
 then
     exit 1
@@ -9,28 +9,39 @@ fi
 
 eval set -- "$OPTS"
 
-TARGET=""
+SRC_DIR=""
+DST_DIR=""
 
 while true ; do
     case "$1" in
-        #-t) TARGET=$2; shift;;
+        -s) SRC_DIR=$2; shift 2;;
+        -d) DST_DIR=$2; shift 2;;
         
         #--target) TARGET=$2; shift 2;;
         --) shift; break;;
     esac
 done
 
-if [ $# -lt 1 ]
+if [ -z "${SRC_DIR}" ]
 then
+	echo "Error: missing source directory"
 	echo "Usage:"
-	echo "$0 <basename_1> <basename_2> <basename_3>"
+	echo "$0 -s <src_dir> -d <dst_dir>"
 	exit;
 fi
 
-for arg
-do
+if [ -z "${DST_DIR}" ]
+then
+	echo "Error: missing destination directory"
+	echo "Usage:"
+	echo "$0 -s <src_dir> -d <dst_dir>"
+	exit;
+fi
 
-    ./collect_stats.sh ${arg}_run*/ > `basename ${arg}`.csv
-    echo "Created: `basename ${arg}`.csv"
+ls $SRC_DIR | sed 's/\_run[0-9]*//g' | sort | uniq | while read BASE
+do
+	./collect_stats.sh ${SRC_DIR}/${BASE}_run*/ > ${DST_DIR}/${BASE}.csv
+	echo "Created: ${BASE}.csv"
 done
+
 
