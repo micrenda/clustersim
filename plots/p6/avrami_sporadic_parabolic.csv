@@ -1,0 +1,6 @@
+# basename, dimensions, count, avg_n, stdev_n, avg_k, stdev_k
+avrami_2d_sporadic_parabolic,	2,	30,	2.17291216E+00,	3.96046944E-02,	3.85209625E-04,	4.31254422E-05
+avrami_3d_sporadic_parabolic,	3,	30,	2.44817777E+00,	1.03415091E-01,	1.96876108E-02,	2.68399754E-03
+avrami_4d_sporadic_parabolic,	4,	30,	2.80467273E+00,	1.35297898E-01,	4.47532913E-03,	1.09113362E-03
+avrami_5d_sporadic_parabolic,	5,	30,	3.24088221E+00,	1.85288226E-01,	2.62050660E-02,	4.87345082E-03
+avrami_6d_sporadic_parabolic,	6,	10,	3.51404538E+00,	1.87705348E-01,	1.04575262E-01,	1.74731332E-02

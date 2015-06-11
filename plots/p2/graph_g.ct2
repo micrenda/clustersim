@@ -1,0 +1,10 @@
+#!/usr/bin/ctioga2 -f
+title 'Parabolic growth (3D)'
+xlabel '$\alpha$'
+ylabel '$\gamma$'
+marker bullet
+marker-scale 0.20
+line-style no
+text-separator ;
+load parabolic_coeff.csv
+plot @1:3 /where 'y > -50 and y < 50'

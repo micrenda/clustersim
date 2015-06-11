@@ -1,0 +1,10 @@
+#!/usr/bin/ctioga2 -f
+
+xlabel '$n$'
+ylabel '$K$'
+
+marker bullet
+marker-scale 0.40
+line-style no
+
+plot @'$6:$7' /where 'x!=0'

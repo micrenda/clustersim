@@ -1,0 +1,16 @@
+#!/usr/bin/ctioga2 -f
+title 'Computational cost (5D)'
+xlabel '$w [pixels]$'
+ylabel '$Cost$'
+legend-inside tl
+
+math /xrange 0:100 /samples 200
+
+set s 100 
+set n  40
+
+set d 5
+
+plot "$(s) * x ** $(d)"  /legend "full scan"
+plot "2 * PI  ** ($(d)/2) / gamma($(d)/ 2) * x ** ($(d) - 1) * $(s) * $(n) ** (1/$(d))"	 /legend "surface scan"
+

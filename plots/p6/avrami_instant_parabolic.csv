@@ -1,0 +1,6 @@
+# basename, dimensions, count, avg_n, stdev_n, avg_k, stdev_k
+avrami_2d_instant_parabolic,	2,	24,	3.52216585E+00,	7.03233856E-02,	6.05272591E-07,	1.57605912E-07
+avrami_3d_instant_parabolic,	3,	30,	5.42247846E+00,	9.86419312E-02,	1.06191899E-07,	2.47855819E-08
+avrami_4d_instant_parabolic,	4,	30,	7.06207516E+00,	1.10451529E-01,	2.62983389E-08,	6.32576507E-09
+avrami_5d_instant_parabolic,	5,	30,	9.32975993E+00,	1.25185195E-01,	1.41025610E-09,	3.08247560E-10
+avrami_6d_instant_parabolic,	6,	30,	9.50824966E+00,	1.18012188E-01,	4.23008410E-09,	8.95349939E-10

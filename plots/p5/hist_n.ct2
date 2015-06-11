@@ -1,0 +1,17 @@
+#!/usr/bin/ctioga2 -f
+
+xlabel '$n$'
+ylabel 'count'
+
+histogram /gap=3mm
+margin 0.05
+
+color red
+fill 0
+fill-color-set red!10
+
+legend-inside tl
+legend-line "\$n_{theory}=$(theo_value)\$"
+
+plot @'$1:$2'
+

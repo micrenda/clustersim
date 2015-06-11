@@ -1,0 +1,9 @@
+title '$v(t)=v_{0}(t-t_{0})^{-\alpha }$'
+math /xrange 2.6:5 /samples 200 
+legend-inside tr
+xlabel '$t$'
+ylabel '$v(t)$'
+plot '((x-2.5)**(-0.2)).real' /legend '$\alpha = 0.2$'
+plot '((x-2.5)**(-0.5)).real' /legend '$\alpha = 0.5$'
+plot '((x-2.5)**(-0.8)).real' /legend '$\alpha = 0.8$'
+legend-line "\$t_{0}=2.5\$"

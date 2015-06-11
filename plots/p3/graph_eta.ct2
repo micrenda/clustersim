@@ -1,0 +1,23 @@
+#!/usr/bin/ctioga2 -f
+title 'Impingiment effect'
+xlabel '$t$'
+ylabel '$X$'
+
+math /xrange 0:5 /samples 200
+
+set k 15.0
+set n 3.0
+
+set eta 1.00
+plot "1-(($(k) * x**$(n))/$(eta) + 1) ** (-$(eta))" /legend "\$\\eta_i = $(eta)\$"
+set eta 0.80
+plot "1-(($(k) * x**$(n))/$(eta) + 1) ** (-$(eta))" /legend "\$\\eta_i = $(eta)\$"
+set eta 0.60
+plot "1-(($(k) * x**$(n))/$(eta) + 1) ** (-$(eta))" /legend "\$\\eta_i = $(eta)\$"
+set eta 0.40
+plot "1-(($(k) * x**$(n))/$(eta) + 1) ** (-$(eta))" /legend "\$\\eta_i = $(eta)\$"
+set eta 0.20
+plot "1-(($(k) * x**$(n))/$(eta) + 1) ** (-$(eta))" /legend "\$\\eta_i = $(eta)\$"
+
+legend-line "\$K_i=$(k)\$"
+legend-line "\$n_i=$(n)\$"

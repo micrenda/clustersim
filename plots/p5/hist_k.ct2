@@ -1,0 +1,16 @@
+#!/usr/bin/ctioga2 -f
+
+xlabel '$K$'
+ylabel 'count'
+
+histogram /gap=3mm
+margin 0.05
+
+color blue
+fill 0
+fill-color-set blue!10
+
+legend-inside tr
+legend-line "\$K_{theory}=$(theo_value)\$"
+
+plot @'$1:$2'
