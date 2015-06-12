@@ -6,11 +6,11 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv,"h",[])
 	except getopt.GetoptError:
-		print 'make_hist_csv <file1> <file2> ...'
+		print 'make_avg_csv <file1> <file2> ...'
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print 'make_hist_csv <file1> <file2> ...'
+			print 'make_avg_csv <file1> <file2> ...'
 			sys.exit()
 	
 	data = {}

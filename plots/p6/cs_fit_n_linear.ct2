@@ -1,0 +1,20 @@
+#!/usr/bin/ctioga2 -f
+
+xlabel 'dimensions'
+ylabel '$n$'
+
+marker bullet
+marker-scale 0.40
+line-style no
+
+load cs_avrami_instant.csv
+plot @'$2:$4:yerr=$5*2'  /legend "Instant"
+
+
+math /xrange 1:7 /samples 100
+
+
+marker none
+line-style solid
+plot 'x'	/color Red 		/legend '$n=d$'
+
