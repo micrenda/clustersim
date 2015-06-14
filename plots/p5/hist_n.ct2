@@ -3,7 +3,7 @@
 xlabel '$n$'
 ylabel 'count'
 
-histogram /gap=3mm
+histogram /gap=3mm /compute-dx=mindx
 margin 0.05
 
 color red

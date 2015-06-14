@@ -1,0 +1,4 @@
+# basename, dimensions, count, avg_n, stdev_n, avg_k, stdev_k
+avrami_2d_sporadic,	2,	30,	2.44752198E+00,	1.11222072E-01,	6.89535872E-03,	1.01126219E-03
+avrami_3d_sporadic,	3,	30,	3.36445215E+00,	9.82028370E-02,	3.54131844E-04,	6.42676916E-05
+avrami_4d_sporadic,	4,	30,	4.19852260E+00,	7.16602273E-02,	1.99431669E-05,	3.25445165E-06
