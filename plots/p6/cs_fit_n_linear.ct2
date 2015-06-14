@@ -9,6 +9,8 @@ line-style no
 
 load cs_avrami_instant.csv
 plot @'$2:$4:yerr=$5*2'  /legend "Instant"
+load cs_avrami_sporadic.csv
+plot @'$2:$4:yerr=$5*2'  /legend "Sporadic"
 
 
 math /xrange 1:7 /samples 100
@@ -17,4 +19,5 @@ math /xrange 1:7 /samples 100
 marker none
 line-style solid
 plot 'x'	/color Red 		/legend '$n=d$'
+plot 'x+1'	/color Green 	/legend '$n=d+1$'
 
