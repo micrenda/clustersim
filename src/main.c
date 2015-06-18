@@ -44,7 +44,7 @@ void err_config(config_t* config);
 void lower_string(char* s);
 void print_help(char* exe_name);
 void check_lua_error(char** lua_msg);
-void mark_space(SpacePixel* space, unsigned int current_time, unsigned long position_encoded, Cluster* cluster, CommonStatus* common_status);
+void mark_space(SpacePixel* space, unsigned int current_time, unsigned long position_encoded, Cluster* cluster, int periodic_boundaries, CommonStatus* common_status);
 
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz);
 char *dirname(char *path);
@@ -300,6 +300,11 @@ int main(int argc, char *argv[])
 			{
 				stop_enabled = 1;
 			}
+			
+			
+			int periodic_boundaries = 0;
+			config_setting_lookup_bool(config_sim, "periodic_boundaries", &periodic_boundaries);
+			
 
 
 			// Get the volume limits to calculated avrami coefficients (NB: this values is a percentual)
@@ -338,7 +343,7 @@ int main(int argc, char *argv[])
 			}
 
 			// Initialize the common module, to be able t encode/decode positions
-			CommonStatus* common_status = init_common(cfg_dimensions, space_sizes, duration);
+			CommonStatus* common_status = init_common(cfg_dimensions, space_sizes, duration, periodic_boundaries);
 
 			// This big array contains the n-dimensional space. Every element of the array represent
 			// a pixel. Every pixed (32bit) is the id of the group it belong to.
@@ -347,13 +352,7 @@ int main(int argc, char *argv[])
 
 			printf("Memory allocation: %.3f MBytes (%lu bytes/px x %lu)\n", 1.0 * common_status->space_volume * sizeof(SpacePixel) / (1024 * 1024), sizeof(SpacePixel), common_status->space_volume);
 
-			// all location are free at the beginning
-			for (unsigned int p = 0; p < common_status->space_volume; p++)
-			{
-				SpacePixel* pixel = &space[p];
-				pixel->cluster = NULL;
-				pixel->fill_neighbours = 0;
-			}
+			init_space(common_status, space);
 
 
 			// Formula to be used to calculate the cluster to be created at any time frame
@@ -758,8 +757,8 @@ int main(int argc, char *argv[])
 						// Initializing all the fields
 						cluster->id = id;
 						cluster->creation_time = t;
-						cluster->radius = 1;
-						cluster->center = position_encoded;
+						cluster->radius  = 1;
+						cluster->center  = position_encoded;
 						cluster->volume  = 1;
 						cluster->growing = 1;
 
@@ -768,7 +767,7 @@ int main(int argc, char *argv[])
 						clusters_created[t]++;
 						
 						
-						mark_space(space, t, position_encoded, cluster, common_status);
+						mark_space(space, t, position_encoded, cluster, periodic_boundaries, common_status);
 					}
 				}
 
@@ -854,7 +853,7 @@ int main(int argc, char *argv[])
 									{
 										#pragma omp critical
 										{
-											mark_space(space, t, p, cluster, common_status);
+											mark_space(space, t, p, cluster, periodic_boundaries, common_status);
 										}
 									}
 								}
@@ -1279,7 +1278,7 @@ int recursive_mkdir(const char *dir)
 }
 
 
-void mark_space(SpacePixel* space, unsigned int current_time, unsigned long position_encoded, Cluster* cluster, CommonStatus* common_status)
+void mark_space(SpacePixel* space, unsigned int current_time, unsigned long position_encoded, Cluster* cluster, int periodic_boundaries, CommonStatus* common_status)
 {
 	if (space[position_encoded].cluster == NULL)
 	{
@@ -1315,6 +1314,7 @@ void mark_space(SpacePixel* space, unsigned int current_time, unsigned long posi
 		exit(5);
 	}
 }
+
 
 
 

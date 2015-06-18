@@ -96,10 +96,12 @@ typedef struct SCommonStatus
 
     unsigned int*  stat_pixel_grow; 	  // contains the amount of pixel grow at every time event
     unsigned long  stat_pixel_grow_total; // contains the amount of pixel grow in total
+    
+    int periodic_boundaries;
 } CommonStatus;
 
 
-CommonStatus* init_common(unsigned short dimensions, unsigned int space_sizes[dimensions], unsigned int duration);
+CommonStatus* init_common(unsigned short dimensions, unsigned int space_sizes[dimensions], unsigned int duration, int periodic_boundaries);
 void free_common(CommonStatus* status);
 
 
@@ -128,7 +130,7 @@ void add_relative_vector(CommonStatus* status, unsigned int result[status->dimen
 short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions]);
 
 unsigned int get_surface_points_count(CommonStatus* status, unsigned int radius);
-
+void init_space(CommonStatus* common_status, SpacePixel* space);
 
 
 #define 	M_E   2.7182818284590452354

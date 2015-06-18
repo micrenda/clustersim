@@ -36,7 +36,7 @@ START_TEST (test_init_2d)
     space_sizes[0] = 300;
     space_sizes[1] = 200;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     ck_assert_int_eq(status->cartesian_moltiplicators[0], 200);
     ck_assert_int_eq(status->cartesian_moltiplicators[1],   1);
@@ -60,7 +60,7 @@ START_TEST (test_init_3d)
     space_sizes[2] = 100;
 
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     ck_assert_int_eq(status->cartesian_moltiplicators[0], 200*100);
     ck_assert_int_eq(status->cartesian_moltiplicators[1],     100);
@@ -99,7 +99,7 @@ START_TEST (test_init_4d)
     space_sizes[2] = 100;
     space_sizes[3] = 50;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
 
     ck_assert_int_eq(status->cartesian_moltiplicators[0],  200*100*50);
@@ -158,7 +158,7 @@ START_TEST (test_encode_position_cartesian_2d)
     space_sizes[0] = 300;
     space_sizes[1] = 200;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned int coordinates[dimensions];
     coordinates[0] = 35;
@@ -183,7 +183,7 @@ START_TEST (test_encode_position_cartesian_3d)
     space_sizes[1] = 200;
     space_sizes[2] = 100;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned int coordinates[dimensions];
     coordinates[0] = 35;
@@ -210,7 +210,7 @@ START_TEST (test_encode_position_cartesian_4d)
     space_sizes[2] = 100;
     space_sizes[3] = 50;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned int coordinates[dimensions];
     coordinates[0] = 35;
@@ -237,7 +237,7 @@ START_TEST (test_decode_position_cartesian_2d)
     space_sizes[0] = 300;
     space_sizes[1] = 200;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned long encoded = 35 * 200 + 45;
     unsigned int coordinates[dimensions];
@@ -262,7 +262,7 @@ START_TEST (test_decode_position_cartesian_3d)
     space_sizes[1] = 200;
     space_sizes[2] = 100;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned long encoded = 35 * 200 * 100 + 45 * 100 + 55;
     unsigned int coordinates[dimensions];
@@ -288,7 +288,7 @@ START_TEST (test_decode_position_cartesian_4d)
     space_sizes[2] = 100;
     space_sizes[3] =  50;
 
-    CommonStatus* status = init_common(dimensions, space_sizes, 100);
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
 
     unsigned long encoded =  35 * 200 * 100 * 50 + 45 * 100 * 50 + 55 * 50 + 15;
     unsigned int coordinates[dimensions];
@@ -589,13 +589,13 @@ START_TEST (test_calculate_distance)
     ck_assert_int_eq(distance_bb, 0);
 
     unsigned int distance_0a = calculate_distance(status, point_0, point_a);
-    ck_assert_int_eq(distance_0a, 152);
+    ck_assert_int_eq(distance_0a, 153);
 
     unsigned int distance_0b = calculate_distance(status, point_0, point_b);
     ck_assert_int_eq(distance_0b, 909);
 
     unsigned int distance_ab = calculate_distance(status, point_a, point_b);
-    ck_assert_int_eq(distance_ab, 916);
+    ck_assert_int_eq(distance_ab, 917);
 
     free_common(status);
 }
@@ -651,6 +651,86 @@ START_TEST (test_polar_to_cartesian)
 END_TEST
 
 
+START_TEST (test_neighbours_2d_init)
+{
+    unsigned short dimensions = 2;
+
+    unsigned int space_sizes[dimensions];
+    space_sizes[0] = 300;
+    space_sizes[1] = 200;
+
+    CommonStatus* status = init_common(dimensions, space_sizes, 100, 0);
+    
+    SpacePixel* space = malloc(status->space_volume * sizeof(SpacePixel));
+    init_space(status, space);
+    
+    
+    unsigned int point[status->dimensions];
+    unsigned int encoded;
+    
+    // Corners
+    point[0] = 0; point[1] = 0;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 5);
+
+    point[0] = 299; point[1] = 0;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 5);
+    
+    point[0] = 0; point[1] = 199;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 5);
+    
+    point[0] = 299; point[1] = 199;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 5);   
+    
+        point[0] = 0; point[1] = 0;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 5);
+
+
+	// Mid sides
+    point[0] = 0; point[1] = 99;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 3);
+    
+    point[0] = 299; point[1] = 99;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 3);
+    
+    point[0] = 149; point[1] = 199;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 3);
+    
+    point[0] = 149; point[1] = 199;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 3);  
+    
+    // Center
+    point[0] = 10; point[1] = 10;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 0);
+    
+    point[0] = 200; point[1] = 50;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 0);
+    
+    point[0] = 40; point[1] = 198;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 0);
+    
+    point[0] = 30; point[1] = 150;
+    encoded = encode_position_cartesian(status, point);
+    ck_assert_int_eq(space[encoded].fill_neighbours, 0); 
+     
+    
+	free(space);
+    free_common(status);
+}
+END_TEST
+
+
 Suite * general_suite(void)
 {
     Suite *s;
@@ -693,6 +773,8 @@ Suite * general_suite(void)
 
     tcase_add_test(tc_core, test_cartesian_to_polar);
     tcase_add_test(tc_core, test_polar_to_cartesian);
+    
+    tcase_add_test(tc_core, test_neighbours_2d_init);
 
     suite_add_tcase(s, tc_core);
 
@@ -725,7 +807,7 @@ CommonStatus* create_test_status_sized(unsigned short dimensions, unsigned int s
     for (unsigned short d = 0; d < dimensions; d++)
         space_sizes[d] = size;
 
-    return init_common(dimensions, space_sizes, 200);
+    return init_common(dimensions, space_sizes, 200, 0);
 }
 
 CommonStatus* create_test_status(unsigned short dimensions)

@@ -25,12 +25,13 @@
 
 
 
-CommonStatus* init_common(unsigned short dimensions, unsigned int space_sizes[dimensions], unsigned int duration)
+CommonStatus* init_common(unsigned short dimensions, unsigned int space_sizes[dimensions], unsigned int duration, int periodic_boundaries)
 {
     CommonStatus* status = calloc(1, sizeof(CommonStatus));
 
     status->dimensions = dimensions;
     status->space_sizes = space_sizes;
+    status->periodic_boundaries = periodic_boundaries;
 
     status->space_volume = 1;
     for (unsigned short d = 0; d < status->dimensions; ++d)
@@ -240,10 +241,23 @@ unsigned int calculate_distance(CommonStatus* status, unsigned int point1[status
 {
     unsigned int distance_pow2 = 0;
 
-    for (unsigned short d = 0; d < status->dimensions; d++)
-    {
-        distance_pow2 += (point2[d] - point1[d]) * (point2[d] - point1[d]);
+	if (!status->periodic_boundaries)
+	{
+		for (unsigned short d = 0; d < status->dimensions; d++)
+		{
+			distance_pow2 += (point2[d] - point1[d]) * (point2[d] - point1[d]);
+		}
     }
+    else
+    {
+		for (unsigned short d = 0; d < status->dimensions; d++)
+		{
+			int d1 = abs(point2[d] - point1[d]);
+			int d2 = status->space_sizes[d] - d1;
+			int d = (d1 <= d2) ? d1 : d2;
+			distance_pow2 += d * d;
+		}
+	}
 
     return round(sqrt(distance_pow2));
 }
@@ -387,21 +401,64 @@ unsigned int pow_uint( unsigned int a, unsigned int b)
 }
 
 
+void init_space(CommonStatus* common_status, SpacePixel* space)
+{
+	// all location are free at the beginning
+	for (unsigned int p = 0; p < common_status->space_volume; p++)
+	{
+		SpacePixel* pixel = &space[p];
+		pixel->cluster = NULL;
+		pixel->fill_neighbours = 0;
+		
+		// If periodic_boundaries is false, we must to initialize the neighbours count at boundaries
+		if (!common_status->periodic_boundaries)
+		{
+			unsigned int p_decoded[common_status->dimensions];
+			decode_position_cartesian(common_status, p_decoded, p);
+			
+			unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
+			get_adjacents_points(common_status, p_decoded, adjacent_points);
+
+			for (unsigned int a = 0; a < common_status->adjacents_count; a++)
+			{
+				if (!is_inside(common_status, adjacent_points[a]))
+				{
+					pixel->fill_neighbours++;
+				}
+			}
+		}
+	}
+}
+
+
 void add_relative_vector(CommonStatus* status, unsigned int result[status->dimensions], unsigned int a[status->dimensions], int b[status->dimensions])
 {
     for (unsigned short d = 0; d < status->dimensions; d++)
     {
-        result[d] = a[d] + b[d];
+		if (!status->periodic_boundaries)
+		{
+			result[d] = a[d] + b[d];
+        }
+        else
+        {
+			if (b[d] < 0 && a[d] < -b[d])
+				result[d] =  status->space_sizes[d] + a[d] + b[d];
+			else if (b[d] >= 0 && a[d] + b[d] >= status->space_sizes[d])
+				result[d] = a[d] + b[d] - status->space_sizes[d];
+			else
+				result[d] = a[d] + b[d];
+		}
     }
 }
-
+/**
+ * It returns true if the point is inside the container.
+ */
 short is_inside(CommonStatus* status, unsigned int coordinates[status->dimensions])
 {
-    short result = 1;
-    for (unsigned short d = 0; d < status->dimensions; d++)
-    {
-        result &= coordinates[d] >= 0 && coordinates[d] < status->space_sizes[d];
-    }
-
-    return result;
+	short result = 1;
+	for (unsigned short d = 0; d < status->dimensions; d++)
+	{
+		result &= coordinates[d] >= 0 && coordinates[d] < status->space_sizes[d];
+	}
+	return result;
 }
