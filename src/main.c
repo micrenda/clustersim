@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <omp.h>
+#include <stdarg.h>
 #include "common.h"
 #include "le.h"
 #include "render.h"
@@ -50,6 +51,8 @@ ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz)
 char *dirname(char *path);
 char *basename(char *path);
 char *getcwd(char *buf, size_t size);
+
+int log_printf(FILE* log_file, const char *format, ...);
 
 int recursive_mkdir(const char *dir);
 
@@ -199,13 +202,6 @@ int main(int argc, char *argv[])
 		for (unsigned int r = 0; r < repeats; r++)
 		{
 			printf("========================================\n");
-
-			time_t time_start;
-			time(&time_start);
-			
-			char time_start_str[256];
-			strftime(time_start_str, 256, "%Y-%m-%d %k:%M:%S %z", localtime(&time_start));
-			printf("Start time: %s\n", time_start_str);
 
 			char* config_file_name = config_files[cf];
 			strcpy (config_full_path, "");
@@ -602,6 +598,21 @@ int main(int argc, char *argv[])
 					exit(-2);
 				}
 			}
+			
+			// Opening output LOG file
+			char log_filename[256];
+			sprintf(log_filename, "%s/output.log", output_directory);
+			FILE *log_file = fopen(log_filename, "w");
+			
+			
+			time_t time_start;
+			time(&time_start);
+			
+			char time_start_str[256];
+			strftime(time_start_str, 256, "%Y-%m-%d %k:%M:%S %z", localtime(&time_start));
+			log_printf(log_file, "Start time: %s\n", time_start_str);
+
+
 
 			// Opening CSV file for output of growing summary
 			char csv_filename_grow[256];
@@ -610,7 +621,7 @@ int main(int argc, char *argv[])
 			FILE *csv_grow_file = fopen(csv_filename_grow, "w");
 			if (csv_filename_grow == NULL)
 			{
-				printf("ERROR - Error opening file '%s'\n", csv_filename_grow);
+				log_printf(log_file, "ERROR - Error opening file '%s'\n", csv_filename_grow);
 				err_config(config);
 			}
 
@@ -686,7 +697,7 @@ int main(int argc, char *argv[])
 
 				if (cnt < 0)
 				{
-					printf("ERROR - LUA script '%s' at t=%u returned a value lower than %u. Returned value: %d", "cluster_creation_func", t, 0, cnt);
+					log_printf(log_file, "ERROR - LUA script '%s' at t=%u returned a value lower than %u. Returned value: %d", "cluster_creation_func", t, 0, cnt);
 					exit(-3);
 				}
 
@@ -738,7 +749,7 @@ int main(int argc, char *argv[])
 
 							if (coordinates[d] >= common_status->space_sizes[d])
 							{
-								printf("ERROR - LUA script '%s' at t=%u returned a value not between %u and %u. Returned value: %u", "cluster_position_func", t, 0, common_status->space_sizes[d], coordinates[d]);
+								log_printf(log_file, "ERROR - LUA script '%s' at t=%u returned a value not between %u and %u. Returned value: %u", "cluster_position_func", t, 0, common_status->space_sizes[d], coordinates[d]);
 								exit(-3);
 							}
 						}
@@ -794,7 +805,7 @@ int main(int argc, char *argv[])
 
 						if (grw < 0)
 						{
-							printf("ERROR - LUA script '%s' at t=%u returned a value lower than %u. Returned value: %d", "cluster_grow_func", t, 0, grw);
+							log_printf(log_file, "ERROR - LUA script '%s' at t=%u returned a value lower than %u. Returned value: %d", "cluster_grow_func", t, 0, grw);
 							exit(-3);
 						}
 
@@ -881,7 +892,7 @@ int main(int argc, char *argv[])
 
 				if (stop_enabled && common_status->stat_pixel_grow_total >= stop_when_volume_is * common_status->space_volume)
 				{
-					printf("\nCluster volume is %f%% of total volume. Stopping.\n", volume_perc);
+					log_printf(log_file, "\nCluster volume is %f%% of total volume. Stopping.\n", volume_perc);
 					break;
 				}
 
@@ -911,7 +922,7 @@ int main(int argc, char *argv[])
 			 * 
 			 */
 			 
-			printf("Executing pixel sanity checks ...\n");
+			log_printf(log_file, "Executing pixel sanity checks ...\n");
 			unsigned long unhealth_pixels     = 0;
 			unsigned long check_grow_pixels   = 0;
 			unsigned int  unhealth_neighbours = 0;
@@ -929,7 +940,7 @@ int main(int argc, char *argv[])
 					{
 						#pragma omp critical
 						{
-							printf("Found unhealt neighbour count at p=%lu\n", p);
+							log_printf(log_file, "Found unhealt neighbour count at p=%lu\n", p);
 						}
 					}
 				}
@@ -979,15 +990,15 @@ int main(int argc, char *argv[])
 								{
 									#pragma omp critical
 									{
-										printf("Found unassigned pixel: ");
-										printf("(");
+										log_printf(log_file, "Found unassigned pixel: ");
+										log_printf(log_file, "(");
 										
 										for (unsigned short d = 0; d < common_status->dimensions; d++)
 										{
-											if (d!=0) printf(", ");
-											printf("%u", p_decoded[d]);
+											if (d!=0) log_printf(log_file, ", ");
+											log_printf(log_file, "%u", p_decoded[d]);
 										}
-										printf(")\n");
+										log_printf(log_file, ")\n");
 									}
 								}
 								break; // No need to check for other clusters
@@ -1003,27 +1014,27 @@ int main(int argc, char *argv[])
 			}
 			
 			if (check_grow_pixels != common_status->stat_pixel_grow_total)
-				printf("WARNING 1/3: in variable 'common_status->stat_pixel_grow_total' we have %lu filled pixels but a final check resulted that we have %lu filled pixels. Please check the code.\n", common_status->stat_pixel_grow_total, check_grow_pixels);
+				log_printf(log_file, "WARNING 1/3: in variable 'common_status->stat_pixel_grow_total' we have %lu filled pixels but a final check resulted that we have %lu filled pixels. Please check the code.\n", common_status->stat_pixel_grow_total, check_grow_pixels);
 			else
-				printf("PASSED 1/3: filled pixel count check passed.\n");
+				log_printf(log_file, "PASSED 1/3: filled pixel count check passed.\n");
 			
 			if (unhealth_pixels > 0)
 			{
-				printf("WARNING 2/3: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
+				log_printf(log_file, "WARNING 2/3: %lu unassigned pixels was found inside the radius of a cluster with a neighbor of the same cluster. This means the algorithm used to grows the clusters is not 100%% correct. The unhealth pixes are %lu of %lu (%.2f%%)\n",
 					unhealth_pixels,
 					unhealth_pixels,
 					common_status->stat_pixel_grow_total,
 					100.d * unhealth_pixels / common_status->stat_pixel_grow_total);
 			}
 			else
-				printf("PASSED 2/3: unassigned pixel check passed.\n");
+				log_printf(log_file, "PASSED 2/3: unassigned pixel check passed.\n");
 				
 			if (unhealth_neighbours > 0)
 			{
-				printf("WARNING 3/3: it was found some pixels with a space->fill_neighbours property with a value (%d) bigger than %d. Please check the code.\n", unhealth_neighbours, common_status->adjacents_count);
+				log_printf(log_file, "WARNING 3/3: it was found some pixels with a space->fill_neighbours property with a value (%d) bigger than %d. Please check the code.\n", unhealth_neighbours, common_status->adjacents_count);
 			}
 			else
-				printf("PASSED 3/3: unassigned unhealth neighbours check passed.\n");
+				log_printf(log_file, "PASSED 3/3: unassigned unhealth neighbours check passed.\n");
 
 
 			char csv_filename_clusters[256];
@@ -1032,7 +1043,7 @@ int main(int argc, char *argv[])
 			FILE *csv_clusters_file = fopen(csv_filename_clusters, "w");
 			if (csv_clusters_file == NULL)
 			{
-				printf("ERROR - Error opening file '%s'\n", csv_filename_clusters);
+				log_printf(log_file, "ERROR - Error opening file '%s'\n", csv_filename_clusters);
 				err_config(config);
 			}
 
@@ -1094,7 +1105,7 @@ int main(int argc, char *argv[])
 				if (render->type == R_2D)
 				{
 					if (duration < 5)
-						printf("WARNING - The duration is %d time units but the video require %d frame per seconds: ffmpeg could not run properly.\n", duration, 5);
+						log_printf(log_file, "WARNING - The duration is %d time units but the video require %d frame per seconds: ffmpeg could not run properly.\n", duration, 5);
 
 					// We ensure the max size does not exceed full hd videos
 					unsigned int w,h;
@@ -1141,15 +1152,15 @@ int main(int argc, char *argv[])
 						video_config_ext);
 
 					
-					printf("Running ffmpeg for 'render_%d':\t", r + 1);
+					log_printf(log_file, "Running ffmpeg for 'render_%d':\t", r + 1);
 					if (debug_flag)
-						printf("%s\n", ffmpeg_cmd);
+						log_printf(log_file, "%s\n", ffmpeg_cmd);
 					
 					int status = system(ffmpeg_cmd);
 					if (status == 0)
 					{
 						if (!debug_flag)
-							printf("DONE\n");
+							log_printf(log_file, "DONE\n");
 						
 						if (!keep_png_flag)
 						{
@@ -1161,10 +1172,10 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						printf("ERROR (%d)\n", status);
-						printf("________________________________________\n");
-						printf("Failed command:\n%s\n", ffmpeg_cmd);
-						printf("________________________________________\n");
+						log_printf(log_file, "ERROR (%d)\n", status);
+						log_printf(log_file, "________________________________________\n");
+						log_printf(log_file, "Failed command:\n%s\n", ffmpeg_cmd);
+						log_printf(log_file, "________________________________________\n");
 					}
 				}
 			}
@@ -1219,7 +1230,9 @@ int main(int argc, char *argv[])
 			int minutes = floor(fmod(time_diff, 3600) / 60);
 			int seconds = floor(fmod(time_diff, 60));
 			
-			printf("End time: %s (duration: %dh:%dm:%ds)\n",  time_end_str, hours, minutes, seconds);
+			log_printf(log_file, "End time: %s (duration: %dh:%dm:%ds)\n",  time_end_str, hours, minutes, seconds);
+			
+			fclose(log_file);
 		}
 
     }
@@ -1315,6 +1328,24 @@ void mark_space(SpacePixel* space, unsigned int current_time, unsigned long posi
 	}
 }
 
+int log_printf(FILE* log_file, const char *format, ...)
+{
+	va_list args;
+	
+    va_start(args, format);
+    int r = vprintf(format, args);
+    va_end(args);
+     
+    if (log_file != NULL)
+    {
+		va_start(args, format);
+		vfprintf(log_file, format, args);
+		va_end(args);
+		fflush(log_file);
+	}
+	
+	return r;
+}
 
 
 
