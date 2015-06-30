@@ -301,6 +301,8 @@ int main(int argc, char *argv[])
 			int periodic_boundaries = 0;
 			config_setting_lookup_bool(config_sim, "periodic_boundaries", &periodic_boundaries);
 			
+			int unconstrained_grow  = 0;
+			config_setting_lookup_bool(config_sim, "unconstrained_grow", &unconstrained_grow);
 
 
 			// Get the volume limits to calculated avrami coefficients (NB: this values is a percentual)
@@ -760,7 +762,8 @@ int main(int argc, char *argv[])
 					// Critical moment: is the space position already occupied by another cluster (if we are in Avrami mode we don't take care)
 					unsigned long position_encoded = encode_position_cartesian(common_status, coordinates);
 
-					if (space[position_encoded].cluster == NULL)
+					
+					if (space[position_encoded].cluster == NULL || unconstrained_grow)
 					{
 						// Location is free, creating a new cluster
 						unsigned int id = clusters_count++;
@@ -777,9 +780,11 @@ int main(int argc, char *argv[])
 
 						clusters_created[t]++;
 						
-						
-						mark_space(space, t, position_encoded, cluster, periodic_boundaries, common_status);
+						if (space[position_encoded].cluster == NULL)
+							mark_space(space, t, position_encoded, cluster, periodic_boundaries, common_status);
 					}
+					
+
 				}
 
 				// growing the clusters
@@ -841,26 +846,35 @@ int main(int argc, char *argv[])
 								{
 									// Checking if there is a near point of the same cluster
 									short found = 0;
-
-									unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
-									get_adjacents_points(common_status, p_decoded, adjacent_points);
-
-									for (unsigned int a = 0; a < common_status->adjacents_count; a++)
+									
+									if (!unconstrained_grow)
 									{
-										if (is_inside(common_status, adjacent_points[a]))
+										unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
+										get_adjacents_points(common_status, p_decoded, adjacent_points);
+
+										for (unsigned int a = 0; a < common_status->adjacents_count; a++)
 										{
-											unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
-											SpacePixel* adjacent_pixel = &space[adjacent_encoded]; 
-											if (adjacent_pixel->cluster != NULL && adjacent_pixel->cluster == cluster)
+											if (is_inside(common_status, adjacent_points[a]))
 											{
-												found = 1;
-												break;
+												unsigned long adjacent_encoded = encode_position_cartesian(common_status, adjacent_points[a]);
+												SpacePixel* adjacent_pixel = &space[adjacent_encoded]; 
+												if (adjacent_pixel->cluster != NULL && adjacent_pixel->cluster == cluster)
+												{
+													found = 1;
+													break;
+												}
+											}
+										}
+									
+										if (found)
+										{
+											#pragma omp critical
+											{
+												mark_space(space, t, p, cluster, periodic_boundaries, common_status);
 											}
 										}
 									}
-									
-									
-									if (found)
+									else
 									{
 										#pragma omp critical
 										{
@@ -963,7 +977,8 @@ int main(int argc, char *argv[])
 							
 							// Checking if there is an adiacent pixel of the same cluster
 							short found = 0;
-
+							
+							
 							unsigned int adjacent_points[common_status->adjacents_count][common_status->dimensions];
 							get_adjacents_points(common_status, p_decoded, adjacent_points);
 
@@ -979,6 +994,7 @@ int main(int argc, char *argv[])
 									}
 								}
 							}
+							
 
 							
 							if (found)
