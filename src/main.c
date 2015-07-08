@@ -1374,6 +1374,7 @@ void print_help(char* exe_name)
     printf("\n");
     printf("      --ffmpeg-encoder <output_dir>            Set encoder used by ffmpeg (default libx264)\n");
     printf("      --keep-png            				   Does not delete generated png files\n");
+    printf("  -d  --debug	                          	   Show debug messages\n");
     printf("  -r  --repeat         <n>                 	   Repeat the simulation n times\n");
     printf("  -o  --output_dir     <output_dir>            Set output directory (default current working dir)\n");
     printf("  -t  --test                                   Execute internal tests\n");
