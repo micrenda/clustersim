@@ -1,0 +1,10 @@
+To compile first compile and install the libconfig library:
+
+cd lib/libconfig-master/libconfig/
+mvn clean install
+
+
+Then it is possible to compile using
+mvn clean package
+
+Or, you can simply execute the script compile.sh in this directory
