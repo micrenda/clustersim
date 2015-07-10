@@ -3,9 +3,14 @@ package com.clustersim;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -13,6 +18,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -20,13 +26,15 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import javax.swing.ListModel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ListDataListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdesktop.beansbinding.AutoBinding;
@@ -34,16 +42,15 @@ import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.beansbinding.Converter;
+import org.jdesktop.beansbinding.ELProperty;
 import org.jdesktop.beansbinding.Validator;
 import org.libconfig.Config;
 import org.libconfig.ConfigOutputter;
 import org.libconfig.Setting;
 import org.libconfig.parser.ConfigParser;
 import org.libconfig.parser.ParseException;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import javax.swing.SwingConstants;
 
+@SuppressWarnings("rawtypes")
 public class MainForm extends JFrame {
 	
 	private static final long serialVersionUID = 3757427787703655561L;
@@ -74,11 +81,11 @@ public class MainForm extends JFrame {
 	private JTextPane textPane_3;
 	private JCheckBox ckThreads;
 	private JLabel lblUseUpTo;
-	private JTextField textField_1;
+	private JSpinner textField_1;
 	private JLabel lblThreads;
 	private JCheckBox ckRepeat;
 	private JLabel lblRepeat;
-	private JTextField textField_4;
+	private JSpinner textField_4;
 	private JLabel lblTimes;
 	private JCheckBox ckDebug;
 	private JLabel lblShowDebugMessages;
@@ -95,11 +102,12 @@ public class MainForm extends JFrame {
 	private JLabel lblNewLabel;
 	private JTextPane textPane_4;
 	private JLabel lblLaunchCommand;
-	private JCheckBox checkBox;
-	private JList<String> list_1;
+	private JCheckBox ckGeneralPosition;
 	
 	private CmdLineLauncher cmdLineLauncher = new CmdLineLauncher();
 	private SimulationConfig simulation;
+	
+	private int currentSelectedPositionFunc;
 	private JLabel lblFile;
 	private JTextField textField_6;
 
@@ -114,26 +122,26 @@ public class MainForm extends JFrame {
 	protected List<String> getPositionFuncsLabels() {
 		ArrayList<String> list = new ArrayList<String>();
 
-		if (simulation.getClusterPositionFuncs() != null && !simulation.getClusterPositionFuncs().isEmpty()) {
-			if (simulation.isGenericPosition()) {
-				list.add("Position generic");
+		
+		if (simulation.isGenericPosition()) {
+			list.add("generic axis");
+		} else {
+			int d = simulation.getDimensionsValue();
+
+			if (d <= 3) {
+				if (d >= 1)
+					list.add("x-axis");
+				if (d >= 2)
+					list.add("y-axis");
+				if (d >= 3)
+					list.add("z-axis");
 			} else {
-				int d = simulation.getDimensionsValue();
-
-				if (d <= 3) {
-					if (d >= 1)
-						list.add("Position x");
-					if (d >= 2)
-						list.add("Position y");
-					if (d >= 3)
-						list.add("Position z");
-				} else {
-					for (int i = 0; i < d; i++)
-						list.add(String.format("Position r%d", i + 1));
-				}
-
+				for (int i = 0; i < d; i++)
+					list.add(String.format("r%d-axis", i + 1));
 			}
+
 		}
+		
 		
 		return list;
 	}
@@ -148,6 +156,7 @@ public class MainForm extends JFrame {
 	 * @throws ParseException 
 	 * @throws FileNotFoundException 
 	 */
+	@SuppressWarnings("rawtypes")
 	public MainForm(final File file) throws FileNotFoundException, ParseException {
 		this.file = file;
 		
@@ -374,14 +383,13 @@ public class MainForm extends JFrame {
 		gbc_lblUseUpTo.gridy = 0;
 		panel_1.add(lblUseUpTo, gbc_lblUseUpTo);
 		
-		textField_1 = new JTextField();
+		textField_1 = new JSpinner();
 		GridBagConstraints gbc_textField_1 = new GridBagConstraints();
 		gbc_textField_1.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_1.gridx = 2;
 		gbc_textField_1.gridy = 0;
 		panel_1.add(textField_1, gbc_textField_1);
-		textField_1.setColumns(10);
 		
 		lblThreads = new JLabel("threads");
 		GridBagConstraints gbc_lblThreads = new GridBagConstraints();
@@ -406,14 +414,13 @@ public class MainForm extends JFrame {
 		gbc_lblRepeat.gridy = 1;
 		panel_1.add(lblRepeat, gbc_lblRepeat);
 		
-		textField_4 = new JTextField();
+		textField_4 = new JSpinner();
 		GridBagConstraints gbc_textField_4 = new GridBagConstraints();
 		gbc_textField_4.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_4.fill = GridBagConstraints.HORIZONTAL;
 		gbc_textField_4.gridx = 2;
 		gbc_textField_4.gridy = 1;
 		panel_1.add(textField_4, gbc_textField_4);
-		textField_4.setColumns(10);
 		
 		lblTimes = new JLabel("times");
 		GridBagConstraints gbc_lblTimes = new GridBagConstraints();
@@ -571,65 +578,126 @@ public class MainForm extends JFrame {
 		tabbedPane.addTab("Creation", null, panel_2, null);
 		GridBagLayout gbl_panel_2 = new GridBagLayout();
 		gbl_panel_2.columnWidths = new int[]{395, 0};
-		gbl_panel_2.rowHeights = new int[]{21, 0};
+		gbl_panel_2.rowHeights = new int[]{21, 0, 0, 0};
 		gbl_panel_2.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_panel_2.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_panel_2.rowWeights = new double[]{1.0, 0.0, 0.0, Double.MIN_VALUE};
 		panel_2.setLayout(gbl_panel_2);
 		
 		textPane = new JTextPane();
 		GridBagConstraints gbc_textPane = new GridBagConstraints();
+		gbc_textPane.insets = new Insets(0, 0, 5, 0);
 		gbc_textPane.fill = GridBagConstraints.BOTH;
 		gbc_textPane.gridx = 0;
 		gbc_textPane.gridy = 0;
 		panel_2.add(textPane, gbc_textPane);
 		
+		lblTTimeFrame = new JLabel("<html><font color='red'>t</font>: time frame (0 to duration-1),\n<font color='red'>s</font>: total duration,\n<font color='red'>d</font>: dimensions of the system (1->1D, 2-> 2D, etc.)</html>");
+		GridBagConstraints gbc_lblTTimeFrame = new GridBagConstraints();
+		gbc_lblTTimeFrame.anchor = GridBagConstraints.WEST;
+		gbc_lblTTimeFrame.insets = new Insets(0, 0, 5, 0);
+		gbc_lblTTimeFrame.gridx = 0;
+		gbc_lblTTimeFrame.gridy = 1;
+		panel_2.add(lblTTimeFrame, gbc_lblTTimeFrame);
+		
+		label = new JLabel("");
+		GridBagConstraints gbc_label = new GridBagConstraints();
+		gbc_label.gridx = 0;
+		gbc_label.gridy = 2;
+		panel_2.add(label, gbc_label);
+		
 		panel_3 = new JPanel();
 		tabbedPane.addTab("Grow", null, panel_3, null);
 		GridBagLayout gbl_panel_3 = new GridBagLayout();
 		gbl_panel_3.columnWidths = new int[]{0, 0};
-		gbl_panel_3.rowHeights = new int[]{0, 0};
+		gbl_panel_3.rowHeights = new int[]{0, 0, 0};
 		gbl_panel_3.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_panel_3.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_panel_3.rowWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
 		panel_3.setLayout(gbl_panel_3);
 		
 		textPane_1 = new JTextPane();
 		GridBagConstraints gbc_textPane_1 = new GridBagConstraints();
+		gbc_textPane_1.insets = new Insets(0, 0, 5, 0);
 		gbc_textPane_1.fill = GridBagConstraints.BOTH;
 		gbc_textPane_1.gridx = 0;
 		gbc_textPane_1.gridy = 0;
 		panel_3.add(textPane_1, gbc_textPane_1);
 		
+		lblNewLabel_1 = new JLabel("<html><font color=\"red\">i</font>: current cluster id, <font color=\"red\">t</font>: current time frame, <font color=\"red\">s</font>: duration, <font color=\"red\">r</font>: current cluster radius, <font color=\"red\">v</font>: current cluster volume, <font color=\"red\">c</font>: cluster creation time frame (0,1,...), <font color=\"red\">d</font>: dimensions of the system (1 => 1D, 2 => 2D, etc.)\n</html>");
+		GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
+		gbc_lblNewLabel_1.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lblNewLabel_1.gridx = 0;
+		gbc_lblNewLabel_1.gridy = 1;
+		panel_3.add(lblNewLabel_1, gbc_lblNewLabel_1);
+		
 		panel_4 = new JPanel();
 		tabbedPane.addTab("Position", null, panel_4, null);
 		GridBagLayout gbl_panel_4 = new GridBagLayout();
-		gbl_panel_4.columnWidths = new int[]{0, 0};
-		gbl_panel_4.rowHeights = new int[]{0, 100, 0, 0};
-		gbl_panel_4.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		gbl_panel_4.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_panel_4.columnWidths = new int[]{0, 100, 0};
+		gbl_panel_4.rowHeights = new int[]{0, 0, 0, 0};
+		gbl_panel_4.columnWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
+		gbl_panel_4.rowWeights = new double[]{0.0, 1.0, 0.0, Double.MIN_VALUE};
 		panel_4.setLayout(gbl_panel_4);
 		
-		checkBox = new JCheckBox("Use just a formula for all axes");
-		GridBagConstraints gbc_checkBox = new GridBagConstraints();
-		gbc_checkBox.anchor = GridBagConstraints.WEST;
-		gbc_checkBox.insets = new Insets(0, 0, 5, 0);
-		gbc_checkBox.gridx = 0;
-		gbc_checkBox.gridy = 0;
-		panel_4.add(checkBox, gbc_checkBox);
+		ckGeneralPosition = new JCheckBox("Use just a formula for all axes");
+		ckGeneralPosition.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				updatePositionAxisModel();
+			}
+		});
+		ckGeneralPosition.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				
+			}
+		});
+		GridBagConstraints gbc_ckGeneralPosition = new GridBagConstraints();
+		gbc_ckGeneralPosition.anchor = GridBagConstraints.WEST;
+		gbc_ckGeneralPosition.insets = new Insets(0, 0, 5, 5);
+		gbc_ckGeneralPosition.gridx = 0;
+		gbc_ckGeneralPosition.gridy = 0;
+		panel_4.add(ckGeneralPosition, gbc_ckGeneralPosition);
 		
-		list_1 = new JList<String>();
-		GridBagConstraints gbc_list_1 = new GridBagConstraints();
-		gbc_list_1.insets = new Insets(0, 0, 5, 0);
-		gbc_list_1.fill = GridBagConstraints.BOTH;
-		gbc_list_1.gridx = 0;
-		gbc_list_1.gridy = 1;
-		panel_4.add(list_1, gbc_list_1);
+		comboBoxPositionAxis = new JComboBox();
+		comboBoxPositionAxis.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				MainForm.this.setCurrentSelectedPositionFunc(comboBoxPositionAxis.getSelectedIndex());
+				loadClusterPosition();
+			}
+		});
+		GridBagConstraints gbc_comboBox_1 = new GridBagConstraints();
+		gbc_comboBox_1.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox_1.fill = GridBagConstraints.HORIZONTAL;
+		gbc_comboBox_1.gridx = 1;
+		gbc_comboBox_1.gridy = 0;
+		panel_4.add(comboBoxPositionAxis, gbc_comboBox_1);
 		
 		textPane_3 = new JTextPane();
+		textPane_3.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				loadClusterPosition();
+			}
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				saveClusterPosition();
+			}
+		});
 		GridBagConstraints gbc_textPane_3 = new GridBagConstraints();
+		gbc_textPane_3.insets = new Insets(0, 0, 5, 0);
+		gbc_textPane_3.gridwidth = 2;
 		gbc_textPane_3.fill = GridBagConstraints.BOTH;
 		gbc_textPane_3.gridx = 0;
-		gbc_textPane_3.gridy = 2;
+		gbc_textPane_3.gridy = 1;
 		panel_4.add(textPane_3, gbc_textPane_3);
+		
+		lblNewLabel_2 = new JLabel("<html>\n<font color=\"red\">i</font>: current cluster id,\n<font color=\"red\">j</font>: counter that indicate the inserting order (start from 0 and is resetted at every timeframe),\n<font color=\"red\">t</font>: current time frame,\n<font color=\"red\">s</font>: total duration,\n<font color=\"red\">w</font>: container size in the current dimension,\n<font color=\"red\">d</font>: dimensions of the system (1 => 1D, 2 => 2D, etc.)\n</html>");
+		GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
+		gbc_lblNewLabel_2.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lblNewLabel_2.gridwidth = 2;
+		gbc_lblNewLabel_2.insets = new Insets(0, 0, 0, 5);
+		gbc_lblNewLabel_2.gridx = 0;
+		gbc_lblNewLabel_2.gridy = 2;
+		panel_4.add(lblNewLabel_2, gbc_lblNewLabel_2);
 		
 		panel_5 = new JPanel();
 		tabbedPane.addTab("Common", null, panel_5, null);
@@ -647,26 +715,48 @@ public class MainForm extends JFrame {
 		gbc_textPane_2.gridy = 0;
 		panel_5.add(textPane_2, gbc_textPane_2);
 		
+		panel_7 = new JPanel();
+		tabbedPane.addTab("Render", null, panel_7, null);
+		GridBagLayout gbl_panel_7 = new GridBagLayout();
+		gbl_panel_7.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_panel_7.rowHeights = new int[]{0, 0, 0};
+		gbl_panel_7.columnWeights = new double[]{1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel_7.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		panel_7.setLayout(gbl_panel_7);
 		
-		list_1.setModel(new ListModel<String>() {
-			
-			
-			public void removeListDataListener(ListDataListener l) {
-				
-			}
-			
-			public int getSize() {
-				return getPositionFuncsLabels().size();
-			}
-			
-			public String getElementAt(int index) {
-				return  getPositionFuncsLabels().get(index);
-			}
-			
-			public void addListDataListener(ListDataListener l) {
-				
-			}
-		});
+		btnAdd = new JButton("Add");
+		GridBagConstraints gbc_btnAdd = new GridBagConstraints();
+		gbc_btnAdd.insets = new Insets(0, 0, 5, 5);
+		gbc_btnAdd.gridx = 1;
+		gbc_btnAdd.gridy = 0;
+		panel_7.add(btnAdd, gbc_btnAdd);
+		
+		btnDelButton = new JButton("Del");
+		GridBagConstraints gbc_btnDelButton = new GridBagConstraints();
+		gbc_btnDelButton.anchor = GridBagConstraints.EAST;
+		gbc_btnDelButton.insets = new Insets(0, 0, 5, 0);
+		gbc_btnDelButton.gridx = 2;
+		gbc_btnDelButton.gridy = 0;
+		panel_7.add(btnDelButton, gbc_btnDelButton);
+		
+		textPane_5 = new JTextPane();
+		GridBagConstraints gbc_textPane_5 = new GridBagConstraints();
+		gbc_textPane_5.gridheight = 2;
+		gbc_textPane_5.insets = new Insets(0, 0, 0, 5);
+		gbc_textPane_5.fill = GridBagConstraints.BOTH;
+		gbc_textPane_5.gridx = 0;
+		gbc_textPane_5.gridy = 0;
+		panel_7.add(textPane_5, gbc_textPane_5);
+		
+		list_1 = new JList();
+		GridBagConstraints gbc_list_1 = new GridBagConstraints();
+		gbc_list_1.gridwidth = 2;
+		gbc_list_1.fill = GridBagConstraints.BOTH;
+		gbc_list_1.gridx = 1;
+		gbc_list_1.gridy = 1;
+		panel_7.add(list_1, gbc_list_1);
+		
+		
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -694,12 +784,32 @@ public class MainForm extends JFrame {
 			}
 		});
 		
+		updatePositionAxisModel();
+		
 		initDataBindings();
 		
 		setVisible(true);
 	}
-	
+
 	@SuppressWarnings("unchecked")
+	private void updatePositionAxisModel() {
+		if (comboBoxPositionAxis.getModel().getSize() > 0)
+			comboBoxPositionAxis.setSelectedIndex(0);
+		
+		DefaultComboBoxModel<Object> comboBoxPositionAxisModel = new DefaultComboBoxModel<>();
+		for (String label: getPositionFuncsLabels())
+			comboBoxPositionAxisModel.addElement(label);
+		comboBoxPositionAxis.setModel(comboBoxPositionAxisModel);
+	}
+	
+	public int getCurrentSelectedPositionFunc() {
+		return currentSelectedPositionFunc;
+	}
+	
+	public void setCurrentSelectedPositionFunc(int currentSelectedPositionFunc) {
+		this.currentSelectedPositionFunc = currentSelectedPositionFunc;
+	}
+	
 	public static SimulationConfig loadConfig(File file) throws FileNotFoundException, ParseException
 	{
 		if (file == null)
@@ -805,7 +915,7 @@ public class MainForm extends JFrame {
 			}
 		}
 		
-		sim.setCommonFuncs(clusterPositionFuncs);
+		sim.setClusterPositionFuncs(clusterPositionFuncs);
 		
 		//
 		
@@ -930,29 +1040,6 @@ public class MainForm extends JFrame {
 		
 	}
 	
-	public static class ConstainerSizeConverter extends Converter<ArrayList<Integer>, String>
-	{
-
-		@Override
-		public String convertForward(ArrayList<Integer> arg0) {
-			return StringUtils.join(arg0, " x ");
-		}
-
-		@Override
-		public ArrayList<Integer> convertReverse(String arg0) {
-			
-			ArrayList<Integer> result = new ArrayList<>();
-			
-			for (String s: StringUtils.split(arg0, "x"))
-			{
-				result.add(Integer.parseInt(StringUtils.trim(s)));
-			}
-			
-			return result;
-		}
-		
-	}
-	
 	public static class PercentualConverter extends Converter<Double, String>
 	{
 
@@ -980,10 +1067,20 @@ public class MainForm extends JFrame {
 		public Validator<Double>.Result validate(Double arg0) {
 		
 			if ((arg0 < 0.0) || (arg0 > 1.0))
-			{
 				return new Result(null, "Value must be between 0% and 100%");
-		    }
-		        
+		    
+			return null;
+		}
+		
+	}
+	
+	public static class BiggerThanZeroValidator extends Validator<Integer>
+	{
+
+		@Override
+		public Validator<Integer>.Result validate(Integer arg0) {
+			if (arg0 <= 0)
+				return new Result(null, "Value must be al least 1");
 			return null;
 		}
 		
@@ -993,7 +1090,24 @@ public class MainForm extends JFrame {
 	private JLabel lblEstimatedMemoryUsage;
 	private JTextField textField_7;
 	private JTextField textField_8;
+	private JPanel panel_7;
+	private JComboBox comboBoxPositionAxis;
+	private JTextPane textPane_5;
+	private JList list_1;
+	private JButton btnDelButton;
+	private JButton btnAdd;
+	private JLabel label;
+	private JLabel lblTTimeFrame;
+	private JLabel lblNewLabel_1;
+	private JLabel lblNewLabel_2;
 
+	private void loadClusterPosition() {
+		textPane_3.setText(simulation.getClusterPositionFuncs().get(currentSelectedPositionFunc));
+	}
+
+	private void saveClusterPosition() {
+		simulation.getClusterPositionFuncs().set(currentSelectedPositionFunc, textPane_3.getText());
+	}
 	protected void initDataBindings() {
 		BeanProperty<CmdLineLauncher, Boolean> cmdLineLauncherBeanProperty = BeanProperty.create("enThreads");
 		BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
@@ -1029,16 +1143,6 @@ public class MainForm extends JFrame {
 		AutoBinding<CmdLineLauncher, String, JTextPane, String> autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, cmdLineLauncher, cmdLineLauncherBeanProperty_7, textPane_4, jTextPaneBeanProperty);
 		autoBinding_7.bind();
 		//
-		BeanProperty<CmdLineLauncher, Integer> cmdLineLauncherBeanProperty_8 = BeanProperty.create("threads");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-		AutoBinding<CmdLineLauncher, Integer, JTextField, String> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, cmdLineLauncher, cmdLineLauncherBeanProperty_8, textField_1, jTextFieldBeanProperty);
-		autoBinding_8.bind();
-		//
-		BeanProperty<CmdLineLauncher, Integer> cmdLineLauncherBeanProperty_9 = BeanProperty.create("repeat");
-		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-		AutoBinding<CmdLineLauncher, Integer, JTextField, String> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, cmdLineLauncher, cmdLineLauncherBeanProperty_9, textField_4, jTextFieldBeanProperty_1);
-		autoBinding_9.bind();
-		//
 		BeanProperty<CmdLineLauncher, String> cmdLineLauncherBeanProperty_10 = BeanProperty.create("encoder");
 		BeanProperty<JComboBox, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
 		AutoBinding<CmdLineLauncher, String, JComboBox, Object> autoBinding_10 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, cmdLineLauncher, cmdLineLauncherBeanProperty_10, comboBox, jComboBoxBeanProperty);
@@ -1053,18 +1157,11 @@ public class MainForm extends JFrame {
 		AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ, ckThreads, jCheckBoxBeanProperty, lblUseUpTo, jLabelBeanProperty);
 		autoBinding_12.bind();
 		//
-		BeanProperty<JTextField, Boolean> jTextFieldBeanProperty_3 = BeanProperty.create("enabled");
-		AutoBinding<JCheckBox, Boolean, JTextField, Boolean> autoBinding_13 = Bindings.createAutoBinding(UpdateStrategy.READ, ckThreads, jCheckBoxBeanProperty, textField_1, jTextFieldBeanProperty_3);
-		autoBinding_13.bind();
-		//
 		AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_14 = Bindings.createAutoBinding(UpdateStrategy.READ, ckThreads, jCheckBoxBeanProperty, lblThreads, jLabelBeanProperty);
 		autoBinding_14.bind();
 		//
 		AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_15 = Bindings.createAutoBinding(UpdateStrategy.READ, ckRepeat, jCheckBoxBeanProperty, lblRepeat, jLabelBeanProperty);
 		autoBinding_15.bind();
-		//
-		AutoBinding<JCheckBox, Boolean, JTextField, Boolean> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ, ckRepeat, jCheckBoxBeanProperty, textField_4, jTextFieldBeanProperty_3);
-		autoBinding_16.bind();
 		//
 		AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_17 = Bindings.createAutoBinding(UpdateStrategy.READ, ckRepeat, jCheckBoxBeanProperty, lblTimes, jLabelBeanProperty);
 		autoBinding_17.bind();
@@ -1088,6 +1185,7 @@ public class MainForm extends JFrame {
 		AutoBinding<JCheckBox, Boolean, JLabel, Boolean> autoBinding_23 = Bindings.createAutoBinding(UpdateStrategy.READ, ckOutputDir, jCheckBoxBeanProperty, lblOutputDir, jLabelBeanProperty);
 		autoBinding_23.bind();
 		//
+		BeanProperty<JTextField, Boolean> jTextFieldBeanProperty_3 = BeanProperty.create("enabled");
 		AutoBinding<JCheckBox, Boolean, JTextField, Boolean> autoBinding_24 = Bindings.createAutoBinding(UpdateStrategy.READ, ckOutputDir, jCheckBoxBeanProperty, textField_5, jTextFieldBeanProperty_3);
 		autoBinding_24.bind();
 		//
@@ -1140,7 +1238,7 @@ public class MainForm extends JFrame {
 		autoBinding_33.bind();
 		//
 		BeanProperty<SimulationConfig, Boolean> simulationConfigBeanProperty_5 = BeanProperty.create("genericPosition");
-		AutoBinding<SimulationConfig, Boolean, JCheckBox, Boolean> autoBinding_34 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, simulation, simulationConfigBeanProperty_5, checkBox, jCheckBoxBeanProperty);
+		AutoBinding<SimulationConfig, Boolean, JCheckBox, Boolean> autoBinding_34 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, simulation, simulationConfigBeanProperty_5, ckGeneralPosition, jCheckBoxBeanProperty);
 		autoBinding_34.bind();
 		//
 		BeanProperty<File, String> fileBeanProperty = BeanProperty.create("absolutePath");
@@ -1153,10 +1251,34 @@ public class MainForm extends JFrame {
 		AutoBinding<SimulationConfig, String, JTextField, String> autoBinding_35 = Bindings.createAutoBinding(UpdateStrategy.READ, simulation, jPanelBeanProperty, textField_7, jTextFieldBeanProperty_9);
 		autoBinding_35.bind();
 		//
-		BeanProperty<SimulationConfig, ArrayList<Integer>> simulationConfigBeanProperty_6 = BeanProperty.create("containerSize");
+		BeanProperty<SimulationConfig, String> simulationConfigBeanProperty_6 = BeanProperty.create("containerSizeStr");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_11 = BeanProperty.create("text");
-		AutoBinding<SimulationConfig, ArrayList<Integer>, JTextField, String> autoBinding_37 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, simulation, simulationConfigBeanProperty_6, textField_8, jTextFieldBeanProperty_11);
-		autoBinding_37.setConverter(new ConstainerSizeConverter());
+		AutoBinding<SimulationConfig, String, JTextField, String> autoBinding_37 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, simulation, simulationConfigBeanProperty_6, textField_8, jTextFieldBeanProperty_11);
+		//autoBinding_37.setConverter(new ConstainerSizeConverter());
 		autoBinding_37.bind();
+		//
+		BeanProperty<CmdLineLauncher, Integer> cmdLineLauncherBeanProperty_8 = BeanProperty.create("threads");
+		BeanProperty<JSpinner, Object> jSpinnerBeanProperty = BeanProperty.create("value");
+		AutoBinding<CmdLineLauncher, Integer, JSpinner, Object> autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, cmdLineLauncher, cmdLineLauncherBeanProperty_8, textField_1, jSpinnerBeanProperty);
+		autoBinding_8.setValidator(new BiggerThanZeroValidator());
+		autoBinding_8.bind();
+		//
+		BeanProperty<CmdLineLauncher, Integer> cmdLineLauncherBeanProperty_9 = BeanProperty.create("repeat");
+		AutoBinding<CmdLineLauncher, Integer, JSpinner, Object> autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, cmdLineLauncher, cmdLineLauncherBeanProperty_9, textField_4, jSpinnerBeanProperty);
+		autoBinding_9.setValidator(new BiggerThanZeroValidator());
+		autoBinding_9.bind();
+		//
+		BeanProperty<JSpinner, Boolean> jSpinnerBeanProperty_1 = BeanProperty.create("enabled");
+		AutoBinding<JCheckBox, Boolean, JSpinner, Boolean> autoBinding_13 = Bindings.createAutoBinding(UpdateStrategy.READ, ckThreads, jCheckBoxBeanProperty, textField_1, jSpinnerBeanProperty_1);
+		autoBinding_13.bind();
+		//
+		AutoBinding<JCheckBox, Boolean, JSpinner, Boolean> autoBinding_16 = Bindings.createAutoBinding(UpdateStrategy.READ, ckRepeat, jCheckBoxBeanProperty, textField_4, jSpinnerBeanProperty_1);
+		autoBinding_16.bind();
+		//
+		ELProperty<JCheckBox, Object> jCheckBoxEvalutionProperty = ELProperty.create("${selected == false}");
+		BeanProperty<JComboBox, Boolean> jComboBoxBeanProperty_2 = BeanProperty.create("visible");
+		AutoBinding<JCheckBox, Object, JComboBox, Boolean> autoBinding_39 = Bindings.createAutoBinding(UpdateStrategy.READ, ckGeneralPosition, jCheckBoxEvalutionProperty, comboBoxPositionAxis, jComboBoxBeanProperty_2);
+		autoBinding_39.bind();
+		
 	}
 }

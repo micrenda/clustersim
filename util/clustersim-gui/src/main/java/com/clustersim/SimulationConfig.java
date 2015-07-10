@@ -4,6 +4,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class SimulationConfig {
 
 	String basename;
@@ -106,6 +108,7 @@ public class SimulationConfig {
 	}
 	public void setDimensions(String dimensions) {
 		this.dimensions = dimensions;
+		updateDimensionalityRelatedFields();
 	}
 	
 	public void setClusterPositionFuncs(ArrayList<String> clusterPositionFuncs) {
@@ -120,6 +123,8 @@ public class SimulationConfig {
 	}
 	public void setGenericPosition(boolean genericPosition) {
 		this.genericPosition = genericPosition;
+		updateDimensionalityRelatedFields();
+		
 	}
 
 	public int getDimensionsValue()
@@ -150,5 +155,79 @@ public class SimulationConfig {
 	    }
 	    
 	    return String.format("%.2f %s", bytes, fileSizeUnits[i]);
+	}
+	
+	void updateDimensionalityRelatedFields()
+	{
+		int d = getDimensionsValue();
+		
+		ArrayList<String> listPositionFuncs = getClusterPositionFuncs();
+		
+		if (listPositionFuncs != null)
+		{
+			if (isGenericPosition())
+			{
+			
+				while (listPositionFuncs.size() < 1)
+					listPositionFuncs.add("");
+				
+				while (listPositionFuncs.size() > 1)
+					listPositionFuncs.remove(listPositionFuncs.size() - 1);
+			}
+			else
+			{
+				
+				while (listPositionFuncs.size() < d)
+					listPositionFuncs.add("");
+				while (listPositionFuncs.size() > d)
+					listPositionFuncs.remove(listPositionFuncs.size() - 1);
+			}
+		}
+		
+		
+		//
+		
+		ArrayList<Integer> listContainerSize = getContainerSize();
+		
+		if (listContainerSize != null)
+		{
+			while (listContainerSize.size() < d)
+				listContainerSize.add(1);
+			while (listContainerSize.size() > d)
+				listContainerSize.remove(listContainerSize.size() - 1);
+			
+		}
+		
+		
+		pcs.firePropertyChange("containerSize", listContainerSize, null);
+		pcs.firePropertyChange("containerSizeStr", "", "?");
+		pcs.firePropertyChange("clusterPositionFuncs", listPositionFuncs, null);
+	}
+	
+	
+	public String getContainerSizeStr() {
+		return StringUtils.join(this.containerSize, " x ");
+	}
+	
+	public void setContainerSizeStr(String containerSize) {
+		
+		if (this.containerSize != null)
+		{
+			int i = 0;
+			for (String s: StringUtils.split(containerSize, "x"))
+			{
+				if (i < this.containerSize.size())
+				{
+					try 
+					{
+						this.containerSize.set(i, Integer.parseInt(StringUtils.trim(s)));
+					}
+					catch (NumberFormatException e) {}
+				}
+				i++;
+			}
+		}
+		
+		pcs.firePropertyChange("estimatedMemoryUsage", "", "?");
 	}
 }
