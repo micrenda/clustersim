@@ -119,7 +119,9 @@ void get_adjacents_points(CommonStatus* status, unsigned int coordinates[status-
 unsigned int calculate_direction_combinations_count(CommonStatus* status, unsigned int base_count);
 
 void calculate_direction_combinations(CommonStatus* status, unsigned int base_count, short base[base_count]);
-unsigned int calculate_distance(CommonStatus* status, unsigned int point1[status->dimensions], unsigned int point2[status->dimensions]);
+
+unsigned int calculate_distance     (CommonStatus* status, unsigned int point1[status->dimensions], unsigned int point2[status->dimensions]);
+unsigned int calculate_distance_pow2(CommonStatus* status, unsigned int point1[status->dimensions], unsigned int point2[status->dimensions]);
 
 unsigned int pow_uint( unsigned int a, unsigned int b);
 

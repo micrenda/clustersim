@@ -262,6 +262,33 @@ unsigned int calculate_distance(CommonStatus* status, unsigned int point1[status
     return round(sqrt(distance_pow2));
 }
 
+// Calculate the distance between two points and return the distance^2
+// This has better performance because it does not perform sqrt
+unsigned int calculate_distance_pow2(CommonStatus* status, unsigned int point1[status->dimensions], unsigned int point2[status->dimensions])
+{
+    unsigned int distance_pow2 = 0;
+
+	if (!status->periodic_boundaries)
+	{
+		for (unsigned short d = 0; d < status->dimensions; d++)
+		{
+			distance_pow2 += (point2[d] - point1[d]) * (point2[d] - point1[d]);
+		}
+    }
+    else
+    {
+		for (unsigned short d = 0; d < status->dimensions; d++)
+		{
+			int d1 = abs(point2[d] - point1[d]);
+			int d2 = status->space_sizes[d] - d1;
+			int d = (d1 <= d2) ? d1 : d2;
+			distance_pow2 += d * d;
+		}
+	}
+
+    return round(distance_pow2);
+}
+
 unsigned int get_surface_points_count(CommonStatus* status, unsigned int radius)
 {
     unsigned int count = 1;
@@ -371,10 +398,8 @@ unsigned int calculate_direction_combinations_count(CommonStatus* status, unsign
 
 void calculate_direction_combinations(CommonStatus* status, unsigned int base_count, short base[base_count])
 {
-    //arrays = calloc(arrays_count, sizeof(short*));
     for (unsigned int a = 0; a < status->adjacents_count; a++)
     {
-       // arrays[a] = calloc(dimensions, sizeof(short));
         for (unsigned short d = 0; d < status->dimensions; d++)
         {
             status->adjacents[a][d] = base[a / pow_uint(base_count, d) % base_count];

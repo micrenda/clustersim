@@ -691,6 +691,7 @@ int main(int argc, char *argv[])
 			for (unsigned int t = 0; t < duration; ++t)
 			{
 				le_setvar("d",common_status->dimensions);
+				le_setvar("m",common_status->space_volume);
 				le_setvar("t",t);
 				le_setvar("s",duration);
 
@@ -739,12 +740,14 @@ int main(int argc, char *argv[])
 						{
 							int cookie_position = position_strategry == AXIS ? cookie_position_axis[d] : cookie_position_gene;
 
+							le_setvar("d",common_status->dimensions);
+							le_setvar("m",common_status->space_volume);
 							le_setvar("i",clusters_count);
 							le_setvar("j",clusters_created[t]);
 							le_setvar("t",t);
 							le_setvar("s",duration);
 							le_setvar("w",common_status->space_sizes[d]);
-							le_setvar("d",common_status->dimensions);
+							
 
 							coordinates[d] = le_eval_integer(cookie_position, &lua_msg);
 							check_lua_error(&lua_msg);
@@ -799,6 +802,7 @@ int main(int argc, char *argv[])
 					if (cluster->growing && cluster->creation_time < t)
 					{
 						le_setvar("d",common_status->dimensions);
+						le_setvar("m",common_status->space_volume);
 						le_setvar("t",t);
 						le_setvar("s",duration);
 						le_setvar("c",cluster->creation_time);
@@ -842,7 +846,7 @@ int main(int argc, char *argv[])
 								unsigned int center_decoded[common_status->dimensions];
 								decode_position_cartesian(common_status, center_decoded, cluster->center);
 								
-								if (g <= clusters_grows[c] && calculate_distance(common_status, center_decoded, p_decoded) < cluster->radius + g && space_pixel->cluster == NULL)
+								if (g <= clusters_grows[c] && calculate_distance_pow2(common_status, center_decoded, p_decoded) < (cluster->radius + g)*(cluster->radius + g) && space_pixel->cluster == NULL)
 								{
 									// Checking if there is a near point of the same cluster
 									short found = 0;
@@ -971,7 +975,7 @@ int main(int argc, char *argv[])
 						unsigned int center_decoded[common_status->dimensions];
 						decode_position_cartesian(common_status, center_decoded, cluster->center);
 						
-						if (calculate_distance(common_status, p_decoded, center_decoded) < (cluster->radius - 3))
+						if (calculate_distance_pow2(common_status, p_decoded, center_decoded) < (cluster->radius - 3) * (cluster->radius - 3))
 						{
 							// The pixel is in the range of the cluster
 							
