@@ -1,5 +1,6 @@
 package com.clustersim;
 
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -30,11 +32,13 @@ import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.ListModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListDataListener;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdesktop.beansbinding.AutoBinding;
@@ -49,9 +53,11 @@ import org.libconfig.ConfigOutputter;
 import org.libconfig.Setting;
 import org.libconfig.parser.ConfigParser;
 import org.libconfig.parser.ParseException;
+import org.jdesktop.swingbinding.JListBinding;
+import org.jdesktop.swingbinding.SwingBindings;
 
 @SuppressWarnings("rawtypes")
-public class MainForm extends JFrame {
+public class updatePositionComboModels extends JFrame {
 	
 	private static final long serialVersionUID = 3757427787703655561L;
 	
@@ -114,10 +120,9 @@ public class MainForm extends JFrame {
 	private File file;
 	
 	
-	protected void getPositionFuncsLabels(List<String> values)
-	{
-		
-	}
+	private RenderConfig selectedRender;
+	
+	
 	
 	protected List<String> getPositionFuncsLabels() {
 		ArrayList<String> list = new ArrayList<String>();
@@ -127,27 +132,16 @@ public class MainForm extends JFrame {
 			list.add("generic axis");
 		} else {
 			int d = simulation.getDimensionsValue();
-
-			if (d <= 3) {
-				if (d >= 1)
-					list.add("x-axis");
-				if (d >= 2)
-					list.add("y-axis");
-				if (d >= 3)
-					list.add("z-axis");
-			} else {
-				for (int i = 0; i < d; i++)
-					list.add(String.format("r%d-axis", i + 1));
-			}
-
+			
+			for (int i = 0; i < d; i++)
+				list.add(AxesUtils.getAxisLabel(d, i));
+			
 		}
-		
-		
 		return list;
 	}
 	
 
-	public MainForm() throws FileNotFoundException, ParseException {
+	public updatePositionComboModels() throws FileNotFoundException, ParseException {
 		
 		this(null);
 	}
@@ -156,8 +150,8 @@ public class MainForm extends JFrame {
 	 * @throws ParseException 
 	 * @throws FileNotFoundException 
 	 */
-	@SuppressWarnings("rawtypes")
-	public MainForm(final File file) throws FileNotFoundException, ParseException {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public updatePositionComboModels(final File file) throws FileNotFoundException, ParseException {
 		this.file = file;
 		
 		this.simulation = loadConfig(file);
@@ -229,6 +223,11 @@ public class MainForm extends JFrame {
 		contentPane.add(lblDimensionality, gbc_lblDimensionality);
 		
 		comboDimensionality = new JComboBox<String>();
+		comboDimensionality.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				updateRenderComboModels();
+			}
+		});
 		comboDimensionality.setModel(new DefaultComboBoxModel<String>(new String[] {"1D", "2D", "3D", "4D", "5D", "6D", "7D", "8D", "9D", "10D", "11D", "12D", "13D", "14D", "15D", "16D", "17D", "18D", "19D", "20D", "21D", "22D", "23D", "24D", "25D", "26D", "27D", "28D", "29D", "30D", "31D", "32D", "33D", "34D", "35D", "36D", "37D", "38D", "39D", "40D", "41D", "42D", "43D", "44D", "45D", "46D", "47D", "48D", "49D", "50D", "51D", "52D", "53D", "54D", "55D", "56D", "57D", "58D", "59D", "60D", "61D", "62D", "63D", "64D", "65D", "66D", "67D", "68D", "69D", "70D", "71D", "72D", "73D", "74D", "75D", "76D", "77D", "78D", "79D", "80D", "81D", "82D", "83D", "84D", "85D", "86D", "87D", "88D", "89D", "90D", "91D", "92D", "93D", "94D", "95D", "96D", "97D", "98D", "99D", "100D", "101D", "102D", "103D", "104D", "105D", "106D", "107D", "108D", "109D", "110D", "111D", "112D", "113D", "114D", "115D", "116D", "117D", "118D", "119D", "120D", "121D", "122D", "123D", "124D", "125D", "126D", "127D", "128D", "129D", "130D", "131D", "132D", "133D", "134D", "135D", "136D", "137D", "138D", "139D", "140D", "141D", "142D", "143D", "144D", "145D", "146D", "147D", "148D", "149D", "150D", "151D", "152D", "153D", "154D", "155D", "156D", "157D", "158D", "159D", "160D", "161D", "162D", "163D", "164D", "165D", "166D", "167D", "168D", "169D", "170D", "171D", "172D", "173D", "174D", "175D", "176D", "177D", "178D", "179D", "180D", "181D", "182D", "183D", "184D", "185D", "186D", "187D", "188D", "189D", "190D", "191D", "192D", "193D", "194D", "195D", "196D", "197D", "198D", "199D", "200D", "201D", "202D", "203D", "204D", "205D", "206D", "207D", "208D", "209D", "210D", "211D", "212D", "213D", "214D", "215D", "216D", "217D", "218D", "219D", "220D", "221D", "222D", "223D", "224D", "225D", "226D", "227D", "228D", "229D", "230D", "231D", "232D", "233D", "234D", "235D", "236D", "237D", "238D", "239D", "240D", "241D", "242D", "243D", "244D", "245D", "246D", "247D", "248D", "249D", "250D", "251D", "252D", "253D", "254D", "255D"}));
 		GridBagConstraints gbc_comboDimensionality = new GridBagConstraints();
 		gbc_comboDimensionality.anchor = GridBagConstraints.WEST;
@@ -641,7 +640,7 @@ public class MainForm extends JFrame {
 		ckGeneralPosition = new JCheckBox("Use just a formula for all axes");
 		ckGeneralPosition.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				updatePositionAxisModel();
+				updatePositionComboModels();
 			}
 		});
 		ckGeneralPosition.addChangeListener(new ChangeListener() {
@@ -659,7 +658,7 @@ public class MainForm extends JFrame {
 		comboBoxPositionAxis = new JComboBox();
 		comboBoxPositionAxis.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				MainForm.this.setCurrentSelectedPositionFunc(comboBoxPositionAxis.getSelectedIndex());
+				updatePositionComboModels.this.setCurrentSelectedPositionFunc(comboBoxPositionAxis.getSelectedIndex());
 				loadClusterPosition();
 			}
 		});
@@ -739,29 +738,176 @@ public class MainForm extends JFrame {
 		gbc_btnDelButton.gridy = 0;
 		panel_7.add(btnDelButton, gbc_btnDelButton);
 		
-		textPane_5 = new JTextPane();
-		GridBagConstraints gbc_textPane_5 = new GridBagConstraints();
-		gbc_textPane_5.gridheight = 2;
-		gbc_textPane_5.insets = new Insets(0, 0, 0, 5);
-		gbc_textPane_5.fill = GridBagConstraints.BOTH;
-		gbc_textPane_5.gridx = 0;
-		gbc_textPane_5.gridy = 0;
-		panel_7.add(textPane_5, gbc_textPane_5);
+		panel_8 = new JPanel();
+		GridBagConstraints gbc_panel_8 = new GridBagConstraints();
+		gbc_panel_8.gridheight = 2;
+		gbc_panel_8.insets = new Insets(0, 0, 0, 5);
+		gbc_panel_8.fill = GridBagConstraints.BOTH;
+		gbc_panel_8.gridx = 0;
+		gbc_panel_8.gridy = 0;
+		panel_7.add(panel_8, gbc_panel_8);
+		GridBagLayout gbl_panel_8 = new GridBagLayout();
+		gbl_panel_8.columnWidths = new int[]{0, 0, 0};
+		gbl_panel_8.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel_8.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gbl_panel_8.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		panel_8.setLayout(gbl_panel_8);
 		
-		list_1 = new JList();
-		GridBagConstraints gbc_list_1 = new GridBagConstraints();
-		gbc_list_1.gridwidth = 2;
-		gbc_list_1.fill = GridBagConstraints.BOTH;
-		gbc_list_1.gridx = 1;
-		gbc_list_1.gridy = 1;
-		panel_7.add(list_1, gbc_list_1);
+		lblName = new JLabel("Name");
+		GridBagConstraints gbc_lblName = new GridBagConstraints();
+		gbc_lblName.insets = new Insets(0, 0, 5, 5);
+		gbc_lblName.anchor = GridBagConstraints.WEST;
+		gbc_lblName.gridx = 0;
+		gbc_lblName.gridy = 0;
+		panel_8.add(lblName, gbc_lblName);
+		
+		textField_9 = new JTextField();
+		GridBagConstraints gbc_textField_9 = new GridBagConstraints();
+		gbc_textField_9.insets = new Insets(0, 0, 5, 0);
+		gbc_textField_9.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_9.gridx = 1;
+		gbc_textField_9.gridy = 0;
+		panel_8.add(textField_9, gbc_textField_9);
+		textField_9.setColumns(10);
+		
+		lblType = new JLabel("Type");
+		GridBagConstraints gbc_lblType = new GridBagConstraints();
+		gbc_lblType.anchor = GridBagConstraints.WEST;
+		gbc_lblType.insets = new Insets(0, 0, 5, 5);
+		gbc_lblType.gridx = 0;
+		gbc_lblType.gridy = 1;
+		panel_8.add(lblType, gbc_lblType);
+		
+		comboBox_1 = new JComboBox();
+		comboBox_1.setModel(new DefaultComboBoxModel(RenderType.values()));
+		GridBagConstraints gbc_comboBox_11 = new GridBagConstraints();
+		gbc_comboBox_11.anchor = GridBagConstraints.WEST;
+		gbc_comboBox_11.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox_11.gridx = 1;
+		gbc_comboBox_11.gridy = 1;
+		panel_8.add(comboBox_1, gbc_comboBox_11);
+		
+		lblAxis = new JLabel("Axis 1");
+		GridBagConstraints gbc_lblAxis = new GridBagConstraints();
+		gbc_lblAxis.anchor = GridBagConstraints.WEST;
+		gbc_lblAxis.insets = new Insets(0, 0, 5, 5);
+		gbc_lblAxis.gridx = 0;
+		gbc_lblAxis.gridy = 2;
+		panel_8.add(lblAxis, gbc_lblAxis);
+		
+		comboBoxRenderAxis1 = new JComboBox();
+		GridBagConstraints gbc_comboBoxRenderAxis1 = new GridBagConstraints();
+		gbc_comboBoxRenderAxis1.anchor = GridBagConstraints.WEST;
+		gbc_comboBoxRenderAxis1.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBoxRenderAxis1.gridx = 1;
+		gbc_comboBoxRenderAxis1.gridy = 2;
+		panel_8.add(comboBoxRenderAxis1, gbc_comboBoxRenderAxis1);
+		
+		lblAxis_1 = new JLabel("Axis 2");
+		GridBagConstraints gbc_lblAxis_1 = new GridBagConstraints();
+		gbc_lblAxis_1.anchor = GridBagConstraints.WEST;
+		gbc_lblAxis_1.insets = new Insets(0, 0, 5, 5);
+		gbc_lblAxis_1.gridx = 0;
+		gbc_lblAxis_1.gridy = 3;
+		panel_8.add(lblAxis_1, gbc_lblAxis_1);
+		
+		comboBoxRenderAxis2 = new JComboBox();
+		GridBagConstraints gbc_comboBoxRenderAxis2 = new GridBagConstraints();
+		gbc_comboBoxRenderAxis2.anchor = GridBagConstraints.WEST;
+		gbc_comboBoxRenderAxis2.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBoxRenderAxis2.gridx = 1;
+		gbc_comboBoxRenderAxis2.gridy = 3;
+		panel_8.add(comboBoxRenderAxis2, gbc_comboBoxRenderAxis2);
+		
+		lblAxis_2 = new JLabel("Axis 3");
+		GridBagConstraints gbc_lblAxis_2 = new GridBagConstraints();
+		gbc_lblAxis_2.anchor = GridBagConstraints.WEST;
+		gbc_lblAxis_2.insets = new Insets(0, 0, 5, 5);
+		gbc_lblAxis_2.gridx = 0;
+		gbc_lblAxis_2.gridy = 4;
+		panel_8.add(lblAxis_2, gbc_lblAxis_2);
+		
+		comboBoxRenderAxis3 = new JComboBox();
+		GridBagConstraints gbc_comboBoxRenderAxis3 = new GridBagConstraints();
+		gbc_comboBoxRenderAxis3.anchor = GridBagConstraints.WEST;
+		gbc_comboBoxRenderAxis3.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBoxRenderAxis3.gridx = 1;
+		gbc_comboBoxRenderAxis3.gridy = 4;
+		panel_8.add(comboBoxRenderAxis3, gbc_comboBoxRenderAxis3);
+		
+		lblCuts = new JLabel("Cuts");
+		GridBagConstraints gbc_lblCuts = new GridBagConstraints();
+		gbc_lblCuts.anchor = GridBagConstraints.WEST;
+		gbc_lblCuts.insets = new Insets(0, 0, 5, 5);
+		gbc_lblCuts.gridx = 0;
+		gbc_lblCuts.gridy = 5;
+		panel_8.add(lblCuts, gbc_lblCuts);
+		
+		textField_10 = new JTextField();
+		GridBagConstraints gbc_textField_10 = new GridBagConstraints();
+		gbc_textField_10.insets = new Insets(0, 0, 5, 0);
+		gbc_textField_10.anchor = GridBagConstraints.ABOVE_BASELINE;
+		gbc_textField_10.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_10.gridx = 1;
+		gbc_textField_10.gridy = 5;
+		panel_8.add(textField_10, gbc_textField_10);
+		textField_10.setColumns(10);
+		
+		lblColorScheme = new JLabel("Color scheme");
+		GridBagConstraints gbc_lblColorScheme = new GridBagConstraints();
+		gbc_lblColorScheme.anchor = GridBagConstraints.WEST;
+		gbc_lblColorScheme.insets = new Insets(0, 0, 5, 5);
+		gbc_lblColorScheme.gridx = 0;
+		gbc_lblColorScheme.gridy = 6;
+		panel_8.add(lblColorScheme, gbc_lblColorScheme);
+		
+		comboBox_5 = new JComboBox();
+		comboBox_5.setModel(new DefaultComboBoxModel(ColorScheme.values()));
+		GridBagConstraints gbc_comboBox_5 = new GridBagConstraints();
+		gbc_comboBox_5.anchor = GridBagConstraints.WEST;
+		gbc_comboBox_5.insets = new Insets(0, 0, 5, 0);
+		gbc_comboBox_5.gridx = 1;
+		gbc_comboBox_5.gridy = 6;
+		panel_8.add(comboBox_5, gbc_comboBox_5);
+		
+		lblColors = new JLabel("Colors");
+		GridBagConstraints gbc_lblColors = new GridBagConstraints();
+		gbc_lblColors.anchor = GridBagConstraints.WEST;
+		gbc_lblColors.insets = new Insets(0, 0, 5, 5);
+		gbc_lblColors.gridx = 0;
+		gbc_lblColors.gridy = 7;
+		panel_8.add(lblColors, gbc_lblColors);
+		
+		panel_9 = new JPanel();
+		FlowLayout flowLayout = (FlowLayout) panel_9.getLayout();
+		flowLayout.setAlignment(FlowLayout.LEFT);
+		GridBagConstraints gbc_panel_9 = new GridBagConstraints();
+		gbc_panel_9.insets = new Insets(0, 0, 5, 0);
+		gbc_panel_9.fill = GridBagConstraints.BOTH;
+		gbc_panel_9.gridx = 1;
+		gbc_panel_9.gridy = 7;
+		panel_8.add(panel_9, gbc_panel_9);
+		
+		btnNewButton = new JButton(" ");
+		panel_9.add(btnNewButton);
+		
+		button = new JButton("+");
+		panel_9.add(button);
+		
+		listRenders = new JList();
+		GridBagConstraints gbc_listRenders = new GridBagConstraints();
+		gbc_listRenders.gridwidth = 2;
+		gbc_listRenders.fill = GridBagConstraints.BOTH;
+		gbc_listRenders.gridx = 1;
+		gbc_listRenders.gridy = 1;
+		panel_7.add(listRenders, gbc_listRenders);
 		
 		
 		
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				int response = JOptionPane.showConfirmDialog(MainForm.this, String.format("Do you want to save the modification on file '%s'?", file.getName()), "Save?", JOptionPane.YES_NO_CANCEL_OPTION);
+				int response = JOptionPane.showConfirmDialog(updatePositionComboModels.this, String.format("Do you want to save the modification on file '%s'?", file.getName()), "Save?", JOptionPane.YES_NO_CANCEL_OPTION);
 				
 				switch (response)
 				{
@@ -774,17 +920,46 @@ public class MainForm extends JFrame {
 					} catch (ParseException | IOException e1) {
 						throw new RuntimeException(e1);
 					}
-						MainForm.this.dispose();
+						updatePositionComboModels.this.dispose();
 					break;
 					
 					case JOptionPane.NO_OPTION:
-						MainForm.this.dispose();
+						updatePositionComboModels.this.dispose();
 					break;
 				}
 			}
 		});
 		
-		updatePositionAxisModel();
+		updatePositionComboModels();
+		updateRenderComboModels();
+		
+	/*	listRenders.setModel(new ListModel<RenderConfig>() {
+
+			@Override
+			public int getSize() {
+				if (simulation.getRenders() != null)
+					return simulation.getRenders().size();
+				else
+					return 0;
+			}
+
+			@Override
+			public RenderConfig getElementAt(int index) {
+				if (simulation.getRenders() != null)
+					return simulation.getRenders().get(index);
+				else
+					return null;
+			}
+
+			@Override
+			public void addListDataListener(ListDataListener l) {
+			}
+
+			@Override
+			public void removeListDataListener(ListDataListener l) {
+			}
+		});*/
+		
 		
 		initDataBindings();
 		
@@ -792,7 +967,9 @@ public class MainForm extends JFrame {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void updatePositionAxisModel() {
+	private void updatePositionComboModels() {
+		
+		// Update combo positions funcs
 		if (comboBoxPositionAxis.getModel().getSize() > 0)
 			comboBoxPositionAxis.setSelectedIndex(0);
 		
@@ -800,6 +977,24 @@ public class MainForm extends JFrame {
 		for (String label: getPositionFuncsLabels())
 			comboBoxPositionAxisModel.addElement(label);
 		comboBoxPositionAxis.setModel(comboBoxPositionAxisModel);
+		
+		
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void updateRenderComboModels()
+	{
+		ArrayList<String> list = new ArrayList<>();
+
+		int d = simulation.getDimensionsValue();
+		
+		for (int i = 0; i < d; i++)
+			list.add(AxesUtils.getAxisLabel(d, i));
+			
+		comboBoxRenderAxis1.setModel(new DefaultComboBoxModel<>(list.toArray()));
+		comboBoxRenderAxis2.setModel(new DefaultComboBoxModel<>(list.toArray()));
+		comboBoxRenderAxis3.setModel(new DefaultComboBoxModel<>(list.toArray()));
 	}
 	
 	public int getCurrentSelectedPositionFunc() {
@@ -810,6 +1005,7 @@ public class MainForm extends JFrame {
 		this.currentSelectedPositionFunc = currentSelectedPositionFunc;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static SimulationConfig loadConfig(File file) throws FileNotFoundException, ParseException
 	{
 		if (file == null)
@@ -934,6 +1130,43 @@ public class MainForm extends JFrame {
 		sim.setCommonFuncs(commonFuncs);
 		//
 		
+		ArrayList<RenderConfig> renders = new ArrayList<>();
+		
+		Setting setting;
+		int k = 0;
+		while ((setting = conf.lookup(String.format("render_%d", k+1))) != null)
+		{
+			if (StringUtils.startsWith(setting.getName(), "render_"))
+			{
+				Integer d = sim.getDimensionsValue();
+				
+				RenderConfig render = new RenderConfig();
+				render.setName((String) setting.lookupValue("name"));
+				
+				if (StringUtils.isNotBlank((String) setting.lookupValue("axis_1"))) render.setAxis1(AxesUtils.getAxisValue(d, ((String) setting.lookupValue("axis_1"))));
+				if (StringUtils.isNotBlank((String) setting.lookupValue("axis_2"))) render.setAxis2(AxesUtils.getAxisValue(d, ((String) setting.lookupValue("axis_2"))));
+				if (StringUtils.isNotBlank((String) setting.lookupValue("axis_3"))) render.setAxis3(AxesUtils.getAxisValue(d, ((String) setting.lookupValue("axis_3"))));
+				
+				render.setCuts((String) setting.lookupValue("cuts"));
+				render.setColorScheme(ColorScheme.valueOf((String) setting.lookupValue("color_scheme")));
+				
+				ArrayList<Integer> colors = new ArrayList<>();
+				
+				Integer color;
+				int j = 1;
+				while ((color = setting.lookupValue(String.format("color_%d", j++))) != null)
+					colors.add(color);
+				
+				render.setColors(colors);
+				
+				renders.add(render);
+				
+			}
+			
+			k++;
+		}
+		
+		sim.setRenders(renders);
 	
 		
 		return sim;
@@ -1036,6 +1269,34 @@ public class MainForm extends JFrame {
 		}
 		
 		
+		// Saving renders
+		int i = 0;
+		for (RenderConfig render: sim.getRenders())
+		{
+			Setting confRender = conf.addGroup(String.format("render_%d", i + 1));
+			
+			confRender.addScalar("name", render.getName());
+			
+			if (render.getAxis1() != null)
+				confRender.addScalar("axis_1", AxesUtils.getAxisSymbol(sim.getDimensionsValue(), render.getAxis1()));
+			if (render.getAxis2() != null)
+				confRender.addScalar("axis_2", AxesUtils.getAxisSymbol(sim.getDimensionsValue(), render.getAxis2()));
+			if (render.getAxis3() != null)
+				confRender.addScalar("axis_3", AxesUtils.getAxisSymbol(sim.getDimensionsValue(), render.getAxis3()));
+			
+			confRender.addScalar("cuts", render.getCuts());
+			confRender.addScalar("color_scheme", render.getColorScheme().name());
+			
+			int j = 0;
+			for (Integer color: render.getColors())
+			{
+				confRender.addScalar(String.format("color_%d", j+1), color);
+				j++;
+			}
+			
+			i++;
+		}
+		
 		new ConfigOutputter().output(conf, file);
 		
 	}
@@ -1092,14 +1353,32 @@ public class MainForm extends JFrame {
 	private JTextField textField_8;
 	private JPanel panel_7;
 	private JComboBox comboBoxPositionAxis;
-	private JTextPane textPane_5;
-	private JList list_1;
+	private JList listRenders;
 	private JButton btnDelButton;
 	private JButton btnAdd;
 	private JLabel label;
 	private JLabel lblTTimeFrame;
 	private JLabel lblNewLabel_1;
 	private JLabel lblNewLabel_2;
+	private JPanel panel_8;
+	private JLabel lblName;
+	private JTextField textField_9;
+	private JLabel lblType;
+	private JComboBox comboBox_1;
+	private JLabel lblAxis;
+	private JLabel lblAxis_1;
+	private JLabel lblAxis_2;
+	private JComboBox comboBoxRenderAxis1;
+	private JComboBox comboBoxRenderAxis2;
+	private JComboBox comboBoxRenderAxis3;
+	private JLabel lblCuts;
+	private JTextField textField_10;
+	private JLabel lblColors;
+	private JPanel panel_9;
+	private JButton btnNewButton;
+	private JButton button;
+	private JLabel lblColorScheme;
+	private JComboBox comboBox_5;
 
 	private void loadClusterPosition() {
 		textPane_3.setText(simulation.getClusterPositionFuncs().get(currentSelectedPositionFunc));
@@ -1254,7 +1533,6 @@ public class MainForm extends JFrame {
 		BeanProperty<SimulationConfig, String> simulationConfigBeanProperty_6 = BeanProperty.create("containerSizeStr");
 		BeanProperty<JTextField, String> jTextFieldBeanProperty_11 = BeanProperty.create("text");
 		AutoBinding<SimulationConfig, String, JTextField, String> autoBinding_37 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, simulation, simulationConfigBeanProperty_6, textField_8, jTextFieldBeanProperty_11);
-		//autoBinding_37.setConverter(new ConstainerSizeConverter());
 		autoBinding_37.bind();
 		//
 		BeanProperty<CmdLineLauncher, Integer> cmdLineLauncherBeanProperty_8 = BeanProperty.create("threads");
@@ -1279,6 +1557,46 @@ public class MainForm extends JFrame {
 		BeanProperty<JComboBox, Boolean> jComboBoxBeanProperty_2 = BeanProperty.create("visible");
 		AutoBinding<JCheckBox, Object, JComboBox, Boolean> autoBinding_39 = Bindings.createAutoBinding(UpdateStrategy.READ, ckGeneralPosition, jCheckBoxEvalutionProperty, comboBoxPositionAxis, jComboBoxBeanProperty_2);
 		autoBinding_39.bind();
-		
+		//
+		BeanProperty<SimulationConfig, List<RenderConfig>> simulationConfigBeanProperty_7 = BeanProperty.create("renders");
+		JListBinding<RenderConfig, SimulationConfig, JList> jListBinding = SwingBindings.createJListBinding(UpdateStrategy.READ, simulation, simulationConfigBeanProperty_7, listRenders);
+		jListBinding.bind();
+		//
+		ELProperty<JList, Object> jListEvalutionProperty = ELProperty.create("${selectedElement != null}");
+		BeanProperty<JPanel, Boolean> jPanelBeanProperty_1 = BeanProperty.create("visible");
+		AutoBinding<JList, Object, JPanel, Boolean> autoBinding_38 = Bindings.createAutoBinding(UpdateStrategy.READ, listRenders, jListEvalutionProperty, panel_8, jPanelBeanProperty_1);
+		autoBinding_38.bind();
+		//
+		BeanProperty<JList, String> jListBeanProperty = BeanProperty.create("selectedElement.name");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_40 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, listRenders, jListBeanProperty, textField_9, jTextFieldBeanProperty);
+		autoBinding_40.bind();
+		//
+		BeanProperty<JList, Object> jListBeanProperty_1 = BeanProperty.create("selectedElement.type");
+		AutoBinding<JList, Object, JComboBox, Object> autoBinding_41 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, listRenders, jListBeanProperty_1, comboBox_1, jComboBoxBeanProperty);
+		autoBinding_41.bind();
+		//
+		BeanProperty<JList, Object> jListBeanProperty_2 = BeanProperty.create("selectedElement.axis1");
+		BeanProperty<JComboBox, Integer> jComboBoxBeanProperty_3 = BeanProperty.create("selectedIndex");
+		AutoBinding<JList, Object, JComboBox, Integer> autoBinding_42 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, listRenders, jListBeanProperty_2, comboBoxRenderAxis1, jComboBoxBeanProperty_3);
+		autoBinding_42.bind();
+		//
+		BeanProperty<JList, String> jListBeanProperty_3 = BeanProperty.create("selectedElement.cuts");
+		BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
+		AutoBinding<JList, String, JTextField, String> autoBinding_43 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, listRenders, jListBeanProperty_3, textField_10, jTextFieldBeanProperty_1);
+		autoBinding_43.bind();
+		//
+		BeanProperty<JList, ColorScheme> jListBeanProperty_4 = BeanProperty.create("selectedElement.colorScheme");
+		AutoBinding<JList, ColorScheme, JComboBox, Object> autoBinding_44 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, listRenders, jListBeanProperty_4, comboBox_5, jComboBoxBeanProperty);
+		autoBinding_44.bind();
+		//
+		BeanProperty<JList, Boolean> jListBeanProperty_5 = BeanProperty.create("selectedElement.render3D");
+		BeanProperty<JLabel, Boolean> jLabelBeanProperty_1 = BeanProperty.create("visible");
+		AutoBinding<JList, Boolean, JLabel, Boolean> autoBinding_45 = Bindings.createAutoBinding(UpdateStrategy.READ, listRenders, jListBeanProperty_5, lblAxis_2, jLabelBeanProperty_1);
+		autoBinding_45.bind();
+		//
+		BeanProperty<JList, Object> jListBeanProperty_6 = BeanProperty.create("selectedElement.render3D");
+		AutoBinding<JList, Object, JComboBox, Boolean> autoBinding_46 = Bindings.createAutoBinding(UpdateStrategy.READ, listRenders, jListBeanProperty_6, comboBoxRenderAxis3, jComboBoxBeanProperty_2);
+		autoBinding_46.bind();
 	}
 }

@@ -25,6 +25,8 @@ public class SimulationConfig {
 	ArrayList<String> clusterPositionFuncs;
 	ArrayList<String> commonFuncs;
 	
+	ArrayList<RenderConfig> renders;
+	
 	private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
 	public void addPropertyChangeListener(PropertyChangeListener pcl) {
@@ -125,6 +127,14 @@ public class SimulationConfig {
 		this.genericPosition = genericPosition;
 		updateDimensionalityRelatedFields();
 		
+	}
+	
+	public ArrayList<RenderConfig> getRenders() {
+		return renders;
+	}
+	
+	public void setRenders(ArrayList<RenderConfig> renders) {
+		this.renders = renders;
 	}
 
 	public int getDimensionsValue()

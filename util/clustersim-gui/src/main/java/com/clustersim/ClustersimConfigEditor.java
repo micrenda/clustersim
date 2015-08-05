@@ -40,7 +40,7 @@ public class ClustersimConfigEditor {
 			{
 				try
 				{
-					new MainForm(selectedFile);
+					new updatePositionComboModels(selectedFile);
 				} catch (Exception e)
 				{
 					JOptionPane.showMessageDialog(null, ExceptionUtils.getStackTrace(e), "Error", JOptionPane.ERROR_MESSAGE);
