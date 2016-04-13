@@ -171,6 +171,39 @@ int le_eval_integer(int cookie, char **pmsg)
     return ret;
 }
 
+
+int le_eval_integer_array(int cookie, char **pmsg, int* array, unsigned int array_len)
+{
+    int err;
+
+    if (!L)
+    {
+        if (pmsg)
+            *pmsg = strdup("LE library not initialized");
+        return 1;
+    }
+    lua_rawgeti(L, LUA_REGISTRYINDEX, cookie);
+    err = lua_pcall(L,0,array_len,0);
+    if (err)
+    {
+        if (pmsg)
+            *pmsg = strdup(lua_tostring(L,-1));
+        lua_pop(L,1);
+        return 1;
+    }
+
+    if (pmsg)
+        *pmsg = NULL;
+
+	for (int i = 0; i < array_len; i++)
+	{
+		array[array_len-i-1] = (int)lua_tointeger(L,-1);
+		lua_pop(L,1);
+	}
+	
+	return 0;
+}
+
 int le_eval_boolean(int cookie, char **pmsg)
 {
     int err;

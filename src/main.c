@@ -414,14 +414,21 @@ int main(int argc, char *argv[])
 			// The variable s is replaced with the total duration.
 			// The variable w is replaced with the container size in the current dimension.
 			// The variable d is replaced with the dimensions of the system (1 => 1D, 2 => 2D, etc.).
-
-			const char* cluster_position_gene_func = NULL;
 			
-			const char* cluster_position_axis_func[common_status->dimensions];
+			const char* cluster_position_func_vector = NULL;
+			
+			const char* cluster_position_func_any = NULL;
+			
+			const char* cluster_position_func_axis[common_status->dimensions];
 			for(unsigned short d = 0; d < common_status->dimensions; d++)
-				cluster_position_axis_func[d] = NULL;
-
-			if (config_setting_lookup_string(config_sim, "cluster_position_func", &cluster_position_gene_func)  != CONFIG_TRUE)
+				cluster_position_func_axis[d] = NULL;
+				
+				
+			if (config_setting_lookup_string(config_sim, "cluster_position_func_vector", &cluster_position_func_vector)  == CONFIG_TRUE)
+			{}
+			else if (config_setting_lookup_string(config_sim, "cluster_position_func_any", &cluster_position_func_any)  == CONFIG_TRUE)
+			{}
+			else	
 			{
 				for (unsigned short d = 0; d < common_status->dimensions; d++)
 				{
@@ -429,18 +436,19 @@ int main(int argc, char *argv[])
 					char axis_label[8];
 					dimension_to_label(axis_label, common_status, d);
 					sprintf(func_name, "cluster_position_func_%s", axis_label);
-					cluster_position_axis_func[d] = NULL;
-					config_setting_lookup_string(config_sim, func_name, &cluster_position_axis_func[d]);
+					config_setting_lookup_string(config_sim, func_name, &cluster_position_func_axis[d]);
 				}
 			}
 
 
-			typedef enum {GENERAL, AXIS, RANDOM} position_strategry_type;
+			typedef enum {ANY, AXIS, VECTOR, RANDOM} position_strategry_type;
 			position_strategry_type position_strategry;
 
 
-			if (cluster_position_gene_func != NULL && cluster_position_gene_func[0] != '\0')
-				position_strategry = GENERAL;
+			if (cluster_position_func_any != NULL    && cluster_position_func_any[0] != '\0')
+				position_strategry = ANY;
+			if (cluster_position_func_vector != NULL && cluster_position_func_vector[0] != '\0')
+				position_strategry = VECTOR;
 			else
 			{
 				short all = 1;
@@ -448,8 +456,8 @@ int main(int argc, char *argv[])
 
 				for (int d = 0; d < common_status->dimensions; d++)
 				{
-					all  &= cluster_position_axis_func[d] != NULL && cluster_position_axis_func[d][0] != '\0';
-					some |= cluster_position_axis_func[d] != NULL && cluster_position_axis_func[d][0] != '\0';
+					all  &= cluster_position_func_axis[d] != NULL && cluster_position_func_axis[d][0] != '\0';
+					some |= cluster_position_func_axis[d] != NULL && cluster_position_func_axis[d][0] != '\0';
 				}
 
 				if (some == 1 && all == 1)
@@ -669,11 +677,17 @@ int main(int argc, char *argv[])
 			check_lua_error(&lua_msg);
 
 
-			int cookie_position_gene = 0;
-
-			if (position_strategry == GENERAL)
+			int cookie_position_any = 0;
+			if (position_strategry == ANY)
 			{
-				cookie_position_gene = le_loadexpr((char*)cluster_position_gene_func,     &lua_msg);
+				cookie_position_any = le_loadexpr((char*)cluster_position_func_any,     &lua_msg);
+				check_lua_error(&lua_msg);
+			}
+			
+			int cookie_position_vector = 0;
+			if (position_strategry == VECTOR)
+			{
+				cookie_position_vector = le_loadexpr((char*)cluster_position_func_vector,  &lua_msg);
 				check_lua_error(&lua_msg);
 			}
 
@@ -683,7 +697,7 @@ int main(int argc, char *argv[])
 			{
 				for (int d = 0; d < common_status->dimensions; d++)
 				{
-					cookie_position_axis[d] = le_loadexpr((char*)cluster_position_axis_func[d], &lua_msg);
+					cookie_position_axis[d] = le_loadexpr((char*)cluster_position_func_axis[d], &lua_msg);
 					check_lua_error(&lua_msg);
 				}
 			}
@@ -733,33 +747,82 @@ int main(int argc, char *argv[])
 				{
 					// position in space
 					unsigned int coordinates[common_status->dimensions];
-
-					for (unsigned int d = 0; d < common_status->dimensions; ++d)
+					if (position_strategry != VECTOR)
 					{
-						if (position_strategry == GENERAL || position_strategry == AXIS)
+						for (unsigned int d = 0; d < common_status->dimensions; ++d)
 						{
-							int cookie_position = position_strategry == AXIS ? cookie_position_axis[d] : cookie_position_gene;
+							if (position_strategry != RANDOM)
+							{
+								
+								
+								int cookie_position = position_strategry == AXIS ? cookie_position_axis[d] : cookie_position_any;
 
-							le_setvar("d",common_status->dimensions);
-							le_setvar("m",common_status->space_volume);
-							le_setvar("i",clusters_count);
-							le_setvar("j",clusters_created[t]);
-							le_setvar("t",t);
-							le_setvar("s",duration);
-							le_setvar("w",common_status->space_sizes[d]);
+								le_setvar("d",common_status->dimensions);
+								le_setvar("m",common_status->space_volume);
+								le_setvar("i",clusters_count);
+								le_setvar("j",clusters_created[t]);
+								le_setvar("t",t);
+								le_setvar("s",duration);
+								le_setvar("w",common_status->space_sizes[d]);
+								
+								for (int h = 0; h < common_status->dimensions; h++)
+								{
+									char axis_label[10];
+									dimension_to_label(axis_label, common_status, h);
+									
+									char variable[10] = "";
+									sprintf(variable, "w_%s", axis_label);
+									le_setvar(variable,common_status->space_sizes[h]);
+								}
+								
+
+								coordinates[d] = le_eval_integer(cookie_position, &lua_msg);
+								check_lua_error(&lua_msg);
+
+								if (coordinates[d] >= common_status->space_sizes[d])
+								{
+									log_printf(log_file, "ERROR - LUA script '%s' at t=%u returned a value not between %u and %u. Returned value: %u", "cluster_position_func", t, 0, common_status->space_sizes[d], coordinates[d]);
+									exit(-3);
+								}
+								
+							}
+							else
+								coordinates[d] = rand() % common_status->space_sizes[d];
+						}
 							
+					}
+					else
+					{
+						le_setvar("d",common_status->dimensions);
+						le_setvar("m",common_status->space_volume);
+						le_setvar("i",clusters_count);
+						le_setvar("j",clusters_created[t]);
+						le_setvar("t",t);
+						le_setvar("s",duration);
+						
+						for (int h = 0; h < common_status->dimensions; h++)
+						{
+							char axis_label[10];
+							dimension_to_label(axis_label, common_status, h);
+							
+							char variable[10] = "";
+							sprintf(variable, "w_%s", axis_label);
+							le_setvar(variable,common_status->space_sizes[h]);
+						}
+						
 
-							coordinates[d] = le_eval_integer(cookie_position, &lua_msg);
-							check_lua_error(&lua_msg);
+						le_eval_integer_array(cookie_position_vector, &lua_msg, (int*) coordinates, common_status->dimensions);
+						check_lua_error(&lua_msg);
 
+						for (unsigned int d = 0; d < common_status->dimensions; ++d)
+						{
 							if (coordinates[d] >= common_status->space_sizes[d])
 							{
 								log_printf(log_file, "ERROR - LUA script '%s' at t=%u returned a value not between %u and %u. Returned value: %u", "cluster_position_func", t, 0, common_status->space_sizes[d], coordinates[d]);
 								exit(-3);
 							}
 						}
-						else
-							coordinates[d] = rand() % common_status->space_sizes[d];
+					
 					}
 
 					// Critical moment: is the space position already occupied by another cluster (if we are in Avrami mode we don't take care)
