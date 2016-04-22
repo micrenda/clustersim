@@ -48,9 +48,10 @@ void check_lua_error(char** lua_msg);
 void mark_space(SpacePixel* space, unsigned int current_time, unsigned long position_encoded, Cluster* cluster, int periodic_boundaries, CommonStatus* common_status);
 
 ssize_t readlink(const char * restrict path, char * restrict buf, size_t bufsiz);
-char *dirname(char *path);
-char *basename(char *path);
-char *getcwd(char *buf, size_t size);
+char* dirname(char *path);
+char* basename(char *path);
+char* getcwd(char *buf, size_t size);
+int   fileno(FILE *stream);
 
 int log_printf(FILE* log_file, const char *format, ...);
 
@@ -66,6 +67,8 @@ int main(int argc, char *argv[])
 	readlink("/proc/self/exe", exe_fullpath, sizeof(exe_fullpath)-1);
 	strcpy(exe_path, dirname(exe_fullpath));
 	strcpy(exe_name, basename(exe_fullpath));
+	
+	int is_terminal = isatty(fileno(stdin));
 	
     short test_flag = 0;
     short debug_flag = 0;
@@ -969,7 +972,7 @@ int main(int argc, char *argv[])
 				}
 				
 				double volume_perc = 100.d * common_status->stat_pixel_grow_total / common_status->space_volume;
-				printf("\033[FCalculated time frame %u of %u (volume: % 3.2f%%)\n", t+1, duration, volume_perc);
+				if (is_terminal) printf("\033[FCalculated time frame %u of %u (volume: % 3.2f%%)\n", t+1, duration, volume_perc);
 
 				if (stop_enabled && common_status->stat_pixel_grow_total >= stop_when_volume_is * common_status->space_volume)
 				{
