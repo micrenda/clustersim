@@ -40,7 +40,7 @@ fi
 
 ls $SRC_DIR | sed 's/\_run[0-9]*//g' | sort | uniq | while read BASE
 do
-	./collect_stats.sh ${SRC_DIR}/${BASE}_run*/ > ${DST_DIR}/${BASE}.csv
+	./stats_collect.sh ${SRC_DIR}/${BASE}_run*/ > ${DST_DIR}/${BASE}.csv
 	echo "Created: ${BASE}.csv"
 done
 
